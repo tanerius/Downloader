@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.12)
 
 set(DL_SRC_PATH "src")
 
+
+
+
 file(GLOB_RECURSE DL_SRC_LIST
             LIST_DIRECTORIES false 
             ${DL_SRC_PATH}/*
@@ -16,8 +19,7 @@ target_compile_features(DownloaderLib PRIVATE cxx_std_17)
 target_include_directories(DownloaderLib 
     PUBLIC src
     PUBLIC src/pch
-    PUBLIC src/include
-    PUBLIC requiredlibs)
+    PUBLIC src/include)
 
 target_link_libraries(DownloaderLib
     PUBLIC CURL::libcurl

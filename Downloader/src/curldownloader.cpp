@@ -1,6 +1,7 @@
 #include "curldownloader.h"
 #include "singleclient.h"
 
+
 namespace DownloaderLib {
 
     std::mutex Downloader::s_waiting;

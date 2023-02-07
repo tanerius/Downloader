@@ -1,6 +1,3 @@
 [submodule "External/curl"]
 	path = External/curl
 	url = git@github.com:tanerius/curl.git
-[submodule "External/openssl-cmake"]
-	path = External/openssl-cmake
-	url = git@github.com:tanerius/openssl-cmake.git
