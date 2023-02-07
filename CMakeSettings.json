@@ -1,0 +1,67 @@
+﻿{
+  "configurations": [
+    {
+      "name": "ReleaseSymbols32",
+      "generator": "Visual Studio 16 2019",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "msvc_x86" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "variables": [],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "name": "ReleaseSymbols64",
+      "generator": "Visual Studio 16 2019 Win64",
+      "configurationType": "RelWithDebInfo",
+      "buildCommandArgs": "/p:PreferredToolArchitecture=x64",
+      "inheritEnvironments": [ "msvc_x64" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "variables": [],
+      "intelliSenseMode": "windows-msvc-x64"
+    },
+    {
+      "name": "Release32",
+      "generator": "Visual Studio 16 2019",
+      "configurationType": "Release",
+      "inheritEnvironments": [ "msvc_x32" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "variables": [],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "name": "Release64",
+      "generator": "Visual Studio 16 2019 Win64",
+      "configurationType": "Release",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "variables": [],
+      "intelliSenseMode": "windows-msvc-x64"
+    },
+    {
+      "name": "Debug32",
+      "generator": "Visual Studio 16 2019",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x32" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "variables": [],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "name": "Debug64",
+      "generator": "Visual Studio 16 2019 Win64",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "variables": [],
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  ]
+}
