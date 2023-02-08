@@ -45,22 +45,22 @@ namespace DownloaderLib {
         m_onCompleted = callback;
     }
 
-    int Downloader::download(std::string url, std::string folder)
+    int Downloader::download(const char* url, const char* folder)
     {
         return download(url, folder, "");
     }
 
-    int Downloader::download(std::string url, std::string folder, DownloaderCallback callback)
+    int Downloader::download(const char* url, const char* folder, DownloaderCallback callback)
     {
         return download(url, folder, "", callback);
     }
 
-    int Downloader::download(std::string url, std::string folder, std::string filename)
+    int Downloader::download(const char* url, const char* folder, const char* filename)
     {
         return download(url, folder, filename, [](int) {});
     }
 
-    int Downloader::download(std::string url, std::string folder, std::string filename, DownloaderCallback callback)
+    int Downloader::download(const char* url, const char* folder, const char* filename, DownloaderCallback callback)
     {
         Task task;
         task.id = ++m_lastId;

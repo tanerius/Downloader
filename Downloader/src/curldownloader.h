@@ -23,10 +23,10 @@ namespace DownloaderLib {
          Download a file from url.
          @return: task ID. If failed, return -1
          */
-        int download(std::string url, std::string folder);
-        int download(std::string url, std::string folder, DownloaderCallback callback);
-        int download(std::string url, std::string folder, std::string filename);
-        int download(std::string url, std::string folder, std::string filename, DownloaderCallback callback);
+        int download(const char* url, const char* folder);
+        int download(const char* url, const char* folder, DownloaderCallback callback);
+        int download(const char* url, const char* folder, const char* filename);
+        int download(const char* url, const char* folder, const char* filename, DownloaderCallback callback);
 
         void runNextTask(); // for download the next task in the waiting list
 
