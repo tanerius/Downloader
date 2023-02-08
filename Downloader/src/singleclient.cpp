@@ -83,21 +83,23 @@ namespace DownloaderLib
         // curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
     }
 
-    bool SingleClient::download(std::string url, std::string folder)
+    bool SingleClient::download(const char* url, const char* folder)
     {
         // try guess filename from the url
-        auto pos = std::find(url.rbegin(), url.rend(), '/');
-        std::string name = url.substr(std::distance(pos, url.rend()));
+        std::string inturl = url;
+        std::string intfolder = folder;
+        auto pos = std::find(inturl.rbegin(), inturl.rend(), '/');
+        std::string name = inturl.substr(std::distance(pos, inturl.rend()));
 
-        if (folder.back() != PathSeparator) folder += PathSeparator;
+        if (intfolder.back() != PathSeparator) intfolder += PathSeparator;
 
-        return downloadAs(url, folder + name);
+        return downloadAs(inturl.c_str(), (intfolder + name).c_str());
     }
 
-    bool SingleClient::downloadAs(std::string url, std::string filepath)
+    bool SingleClient::downloadAs(const char* url, const char* filepath)
     {
         // set url
-        curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(m_curl, CURLOPT_URL, url);
 
         // forward all data to this func
         curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
@@ -130,10 +132,10 @@ namespace DownloaderLib
             if (result == CURLE_OK && responseCode == 200) // only assume 200 is correct
             {
                 // check if file exists if so remove it
-                std::remove(filepath.c_str());
+                std::remove(filepath);
 
                 // rename it to real filename which does a move of the file so no need for explicit deletion
-                auto ret = std::rename(tmpFile.c_str(), filepath.c_str());
+                auto ret = std::rename(tmpFile.c_str(), filepath);
                 return (ret == 0);
             }
 

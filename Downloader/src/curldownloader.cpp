@@ -124,11 +124,11 @@ namespace DownloaderLib {
             // use httpclient to download it
             if (task.filename.empty())
             {
-                client.download(task.url, task.folder);
+                client.download(task.url.c_str(), task.folder.c_str());
             }
             else
             {
-                client.downloadAs(task.url, task.folder + PathSeparator + task.filename);
+                client.downloadAs(task.url.c_str(), (task.folder + PathSeparator + task.filename).c_str());
             }
 
             // remove me from the running list

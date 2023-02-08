@@ -19,11 +19,11 @@ namespace DownloaderLib
         /**
          Download url into folder
          */
-        bool download(std::string url, const std::string folder);
+        bool download(const char* url, const char* folder);
         /**
          Download url and rename it to satisfy filepath
          */
-        bool downloadAs(std::string url, std::string filepath);
+        bool downloadAs(const char* url, const char* filepath);
 
     private:
         static size_t writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
