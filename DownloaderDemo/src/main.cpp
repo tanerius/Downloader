@@ -6,8 +6,9 @@
 
 void testJson()
 {
-    std::ifstream f("sample.php");
+    std::ifstream f(".\\taner.json");
     nlohmann::json data = nlohmann::json::parse(f);
+    std::cout << data.at("name");
     std::string s = data.dump();
     std::cout << s << std::endl;
 }
@@ -23,7 +24,7 @@ int main()
     
     // test some https downloads
     
-    dlInstance->download("https://home.tanerius.com/samples/sample.php", "./");
+    dlInstance->download("https://home.tanerius.com/samples/sample.php", ".\\", "taner.json");
     /*
     dlInstance->download("https://home.tanerius.com/samples/jpgs/sample1.jpg", "./");
     

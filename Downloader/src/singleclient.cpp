@@ -1,6 +1,7 @@
 #include "singleclient.h"
-
-
+#include <filesystem>
+#include <ctime>
+#include <iostream>
 
 namespace DownloaderLib
 {
@@ -21,6 +22,48 @@ namespace DownloaderLib
         curl_easy_cleanup(m_curl);
     }
 
+    std::string SingleClient::genRandomString(const int len) {
+        static const char alphanum[] =
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz";
+        std::string tmp_s;
+        tmp_s.reserve(len);
+
+        for (int i = 0; i < len; ++i) {
+            tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+        }
+
+        return tmp_s;
+    }
+
+    std::string SingleClient::post(const std::string& url, const std::string& data)
+    {
+        struct curl_slist* slist1;
+        slist1 = NULL;
+        slist1 = curl_slist_append(slist1, "Content-Type: application/json");
+
+
+        // set url
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_URL, url.c_str());
+
+        // forward all data to this func
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_WRITEFUNCTION, &SingleClient::writeToString);
+        curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, data.c_str());
+        curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, slist1);
+
+        std::string response;
+
+        curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
+
+        // do it
+        curl_easy_perform(m_curl);
+
+        return response;
+        // curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
+    }
+
     std::string SingleClient::get(std::string url)
     {
         // set url
@@ -37,13 +80,14 @@ namespace DownloaderLib
         curl_easy_perform(m_curl);
 
         return response;
+        // curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
     }
 
     bool SingleClient::download(std::string url, std::string folder)
     {
         // try guess filename from the url
-        auto pos = find(url.rbegin(), url.rend(), '/');
-        std::string name = url.substr(distance(pos, url.rend()));
+        auto pos = std::find(url.rbegin(), url.rend(), '/');
+        std::string name = url.substr(std::distance(pos, url.rend()));
 
         if (folder.back() != PathSeparator) folder += PathSeparator;
 
@@ -59,7 +103,11 @@ namespace DownloaderLib
         curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
 
         // try to write a temp file instead of the real file
-        std::string tmpFile = filepath + ".tmp";
+        std::string tmpFile = genRandomString(20) + ".tmp";
+        //std::string tmpFile = filepath + ".tmp";
+
+        while (std::filesystem::exists(tmpFile))
+            tmpFile = genRandomString(10) + ".tmp";
 
         // open the file
         FILE* file = nullptr;
@@ -73,7 +121,7 @@ namespace DownloaderLib
             // do it
             CURLcode result = curl_easy_perform(m_curl);
 
-            fclose(file);
+            std::fclose(file);
 
             // get HTTP response code
             int responseCode;
@@ -81,12 +129,15 @@ namespace DownloaderLib
 
             if (result == CURLE_OK && responseCode == 200) // only assume 200 is correct
             {
-                // rename it to real filename
-                auto ret = rename(tmpFile.c_str(), filepath.c_str());
+                // check if file exists if so remove it
+                std::remove(filepath.c_str());
+
+                // rename it to real filename which does a move of the file so no need for explicit deletion
+                auto ret = std::rename(tmpFile.c_str(), filepath.c_str());
                 return (ret == 0);
             }
 
-            remove(tmpFile.c_str()); // clean tmp file
+            std::remove(tmpFile.c_str()); // clean tmp file if non zero rename
         }
 
         return false;
@@ -116,12 +167,12 @@ namespace DownloaderLib
 
         // init current session
         m_curl = curl_easy_init();
-
         // try not to use signals
         curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1L);
-
         // set a default user agent
         curl_easy_setopt(m_curl, CURLOPT_USERAGENT, curl_version());
+        // prevent ending up in an endless redirection 
+        curl_easy_setopt(m_curl, CURLOPT_MAXREDIRS, 50L);
 
 #ifdef DEBUG_MODE
         // Switch on full protocol/debug output while testing

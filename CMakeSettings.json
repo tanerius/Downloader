@@ -2,7 +2,7 @@
   "configurations": [
     {
       "name": "ReleaseSymbols32",
-      "generator": "Visual Studio 16 2019",
+      "generator": "Visual Studio 17 2022",
       "configurationType": "RelWithDebInfo",
       "inheritEnvironments": [ "msvc_x86" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
@@ -12,7 +12,7 @@
     },
     {
       "name": "ReleaseSymbols64",
-      "generator": "Visual Studio 16 2019 Win64",
+      "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "RelWithDebInfo",
       "buildCommandArgs": "/p:PreferredToolArchitecture=x64",
       "inheritEnvironments": [ "msvc_x64" ],
@@ -23,7 +23,7 @@
     },
     {
       "name": "Release32",
-      "generator": "Visual Studio 16 2019",
+      "generator": "Visual Studio 17 2022",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x32" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
@@ -33,7 +33,7 @@
     },
     {
       "name": "Release64",
-      "generator": "Visual Studio 16 2019 Win64",
+      "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
@@ -44,7 +44,7 @@
     },
     {
       "name": "Debug32",
-      "generator": "Visual Studio 16 2019",
+      "generator": "Visual Studio 17 2022",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x32" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
@@ -54,7 +54,7 @@
     },
     {
       "name": "Debug64",
-      "generator": "Visual Studio 16 2019 Win64",
+      "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",

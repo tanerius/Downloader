@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.12)
 set(DL_SRC_PATH "src")
 
 
-
-
 file(GLOB_RECURSE DL_SRC_LIST
             LIST_DIRECTORIES false 
             ${DL_SRC_PATH}/*

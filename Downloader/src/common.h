@@ -12,7 +12,7 @@
 #include <thread>
 #include <mutex>
 
-#define PathSeparator      '/'
+#define PathSeparator      '\\'
 #define MaxDownloadThreads 5
 
 #define DEBUG_MODE
