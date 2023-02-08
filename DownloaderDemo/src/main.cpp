@@ -25,11 +25,11 @@ int main()
     // test some https downloads
     
     dlInstance->download("https://home.tanerius.com/samples/sample.php", ".\\", "taner.json");
+    
+    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample1.jpg", ".\\");
+    
+    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample2.jpg", ".\\");
     /*
-    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample1.jpg", "./");
-    
-    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample2.jpg", "./");
-    
     // test some http downloads
     dlInstance->download("http://home.tanerius.com/samples/jpgs/sample3.jpg", "./");
     dlInstance->download("http://home.tanerius.com/samples/jpgs/sample4.jpg", "./");

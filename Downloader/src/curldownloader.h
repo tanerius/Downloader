@@ -37,17 +37,23 @@ namespace DownloaderLib {
         struct Task
         {
             int id;
-            std::string url;
-            std::string folder;
-            std::string filename;
+            char* url;
+            char* folder;
+            char* filename;
             DownloaderCallback callback;
 
-            Task() : id(0) {}
+            Task() : id(0), url(nullptr), folder(nullptr), filename(nullptr) {}
+            ~Task() {
+                free(url);
+                free(folder);
+                free(filename);
+            }
         };
 
     private:
         Downloader(); // for singleton
         void callCallbackSafely(DownloaderCallback callback, int); // make sure the callbacks are executed one by one
+        const int stringSize(const char* str);
 
     private:
         int m_lastId;

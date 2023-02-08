@@ -64,16 +64,11 @@ namespace DownloaderLib {
     {
         Task task;
         task.id = ++m_lastId;
-        task.url = url;
-        task.folder = folder;
-        task.filename = filename;
+        task.url = strdup(url);
+        task.folder = strdup(folder);
+        task.filename = (filename == nullptr) ? nullptr : strdup(filename);
         task.callback = callback;
-
-        // put it in to the queue
-        s_waiting.lock();
-        m_waiting.push(task);
-        s_waiting.unlock();
-
+        
         // check thread count
         bool canCreateThread = false;
 
@@ -93,6 +88,14 @@ namespace DownloaderLib {
         }
 
         return task.id;
+    }
+
+    const int Downloader::stringSize(const char* str)
+    {
+        if (str == nullptr) return 0;
+        int size = 0;
+        while (str[size] != '\0') size++;
+        return size;
     }
 
     // caution: this method will be called in threads!
@@ -122,7 +125,7 @@ namespace DownloaderLib {
             s_running.unlock();
 
             // use httpclient to download it
-            if (task.filename.empty())
+            if (stringSize(task.filename) == 0)
             {
                 client.download(task.url.c_str(), task.folder.c_str());
             }
