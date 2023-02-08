@@ -149,7 +149,10 @@ namespace DownloaderLib {
 
     void Downloader::callCallbackSafely(DownloaderCallback callback, int p)
     {
-        const std::lock_guard<std::mutex> lock(s_callback);
-        callback(p);
+        if (m_onCompleted != nullptr)
+        {
+            const std::lock_guard<std::mutex> lock(s_callback);
+            callback(p);
+        }
     }
 }

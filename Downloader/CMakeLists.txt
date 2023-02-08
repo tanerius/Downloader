@@ -15,9 +15,7 @@ add_library(DownloaderLib STATIC
 target_compile_features(DownloaderLib PRIVATE cxx_std_17)
 
 target_include_directories(DownloaderLib 
-    PUBLIC src
-    PUBLIC src/pch
-    PUBLIC src/include)
+    PUBLIC src)
 
 target_link_libraries(DownloaderLib
     PUBLIC CURL::libcurl
