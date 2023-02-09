@@ -11,19 +11,17 @@ namespace DownloaderLib
     {
     public:
         SingleClient();
-        SingleClient(std::string agent);
+        //SingleClient(const char* agent);
         virtual ~SingleClient();
 
-        std::string get(std::string url);
-        std::string post(const std::string& url, const std::string& data);
-        /**
-         Download url into folder
-         */
-        bool download(const char* url, const char* folder);
+        std::string get(const char* url);
+        std::string post(const char* url, const char* data);
+
         /**
          Download url and rename it to satisfy filepath
          */
-        bool downloadAs(const char* url, const char* filepath);
+        void download(const char* url, const char* filepath, void (*func)(int, const char*), 
+            std::mutex* callbackMutex);
 
     private:
         static size_t writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);

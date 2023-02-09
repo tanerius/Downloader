@@ -3,7 +3,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-
+/*
 void testJson()
 {
     std::ifstream f(".\\taner.json");
@@ -12,23 +12,35 @@ void testJson()
     std::string s = data.dump();
     std::cout << s << std::endl;
 }
+*/
+
+void foo(int x, const char* p)
+{
+    std::cout << "Thread exited..." << x << std::endl;
+    std::string file = p;
+    std::cout << "Downloaded: " << p << std::endl;
+}
+
 
 int main()
 {
-    auto dlInstance = DownloaderLib::Downloader::instance();
-    
-    dlInstance->setCompletedCallback([](int) {
-        testJson();
-        std::cout << "All Done!" << std::endl;
-    });
+    auto dlInstance = new DownloaderLib::Downloader();
     
     // test some https downloads
     
-    dlInstance->download("https://home.tanerius.com/samples/sample.php", ".\\", "taner.json");
+    dlInstance->download("https://home.tanerius.com/samples/sample.php", ".\\taner.json", &foo);
     
-    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample1.jpg", ".\\");
+    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample1.jpg", ".\\sample1.jpg", [](int, const char* p) {
+        std::cout << "Thread exited..." << std::endl;
+        std::string file = p;
+        std::cout << "Downloaded: " << p << std::endl;
+        });
     
-    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample2.jpg", ".\\");
+    dlInstance->download("https://home.tanerius.com/samples/jpgs/sample2.jpg", ".\\sample2.jpg", [](int, const char* p) {
+        std::cout << "Thread exited..." << std::endl;
+    std::string file = p;
+    std::cout << "Downloaded: " << p << std::endl;
+        });
     /*
     // test some http downloads
     dlInstance->download("http://home.tanerius.com/samples/jpgs/sample3.jpg", "./");

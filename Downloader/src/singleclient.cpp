@@ -11,11 +11,12 @@ namespace DownloaderLib
         initCURL();
     }
 
-    SingleClient::SingleClient(std::string agent) : SingleClient()
+    /*
+    SingleClient::SingleClient(const char* agent) : SingleClient()
     {
-        curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, agent.c_str());
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, agent);
     }
-
+    */
 
     SingleClient::~SingleClient()
     {
@@ -37,7 +38,7 @@ namespace DownloaderLib
         return tmp_s;
     }
 
-    std::string SingleClient::post(const std::string& url, const std::string& data)
+    std::string SingleClient::post(const char* url, const char* data)
     {
         struct curl_slist* slist1;
         slist1 = NULL;
@@ -45,12 +46,12 @@ namespace DownloaderLib
 
 
         // set url
-        curl_easy_setopt(m_curl, CURLoption::CURLOPT_URL, url.c_str());
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_URL, url);
 
         // forward all data to this func
         curl_easy_setopt(m_curl, CURLoption::CURLOPT_WRITEFUNCTION, &SingleClient::writeToString);
         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, data.c_str());
+        curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, data);
         curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, slist1);
 
         std::string response;
@@ -61,13 +62,12 @@ namespace DownloaderLib
         curl_easy_perform(m_curl);
 
         return response;
-        // curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
     }
 
-    std::string SingleClient::get(std::string url)
+    std::string SingleClient::get(const char* url)
     {
         // set url
-        curl_easy_setopt(m_curl, CURLoption::CURLOPT_URL, url.c_str());
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_URL, url);
 
         // forward all data to this func
         curl_easy_setopt(m_curl, CURLoption::CURLOPT_WRITEFUNCTION, &SingleClient::writeToString);
@@ -83,20 +83,7 @@ namespace DownloaderLib
         // curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "POST");
     }
 
-    bool SingleClient::download(const char* url, const char* folder)
-    {
-        // try guess filename from the url
-        std::string inturl = url;
-        std::string intfolder = folder;
-        auto pos = std::find(inturl.rbegin(), inturl.rend(), '/');
-        std::string name = inturl.substr(std::distance(pos, inturl.rend()));
-
-        if (intfolder.back() != PathSeparator) intfolder += PathSeparator;
-
-        return downloadAs(inturl.c_str(), (intfolder + name).c_str());
-    }
-
-    bool SingleClient::downloadAs(const char* url, const char* filepath)
+    void SingleClient::download(const char* url, const char* filepath, void (*func)(int, const char*), std::mutex* callbackMutex)
     {
         // set url
         curl_easy_setopt(m_curl, CURLOPT_URL, url);
@@ -128,21 +115,24 @@ namespace DownloaderLib
             // get HTTP response code
             int responseCode;
             curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
-
+            int ret = 1;
             if (result == CURLE_OK && responseCode == 200) // only assume 200 is correct
             {
                 // check if file exists if so remove it
                 std::remove(filepath);
 
                 // rename it to real filename which does a move of the file so no need for explicit deletion
-                auto ret = std::rename(tmpFile.c_str(), filepath);
-                return (ret == 0);
+                ret = std::rename(tmpFile.c_str(), filepath);
+
+                
             }
-
             std::remove(tmpFile.c_str()); // clean tmp file if non zero rename
-        }
 
-        return false;
+            callbackMutex->lock();
+            if (func != nullptr && func != 0)
+                func(ret, filepath);
+            callbackMutex->unlock();
+        }
     }
 
     size_t SingleClient::writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream)
