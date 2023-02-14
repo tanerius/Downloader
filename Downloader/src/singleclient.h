@@ -32,5 +32,6 @@ namespace DownloaderLib
 
     private:
         CURL* m_curl;
+        curl_off_t m_lastruntime;
     };
 }

@@ -85,6 +85,13 @@ namespace DownloaderLib
     void SingleClient::download(const char* url, const char* filepath, void (*func)(int, const char*), std::mutex* callbackMutex)
     {
         /*
+        * int main()
+{
+    std::ofstream ofs("ouput.img", std::ios::binary | std::ios::out);
+    ofs.seekp((300<<20) - 1);
+    ofs.write("", 1);
+}
+
         Pseudo steps:
         1. Check if file has been previously stopped
         1.1 If no create an info entry for the file and go to 2
