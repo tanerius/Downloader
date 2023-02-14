@@ -9,14 +9,13 @@ namespace DownloaderLib
     SingleClient::SingleClient()
     {
         initCURL();
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, curl_version());
     }
 
-    /*
     SingleClient::SingleClient(const char* agent) : SingleClient()
     {
         curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, agent);
     }
-    */
 
     SingleClient::~SingleClient()
     {
@@ -85,6 +84,24 @@ namespace DownloaderLib
 
     void SingleClient::download(const char* url, const char* filepath, void (*func)(int, const char*), std::mutex* callbackMutex)
     {
+        /*
+        Pseudo steps:
+        1. Check if file has been previously stopped
+        1.1 If no create an info entry for the file and go to 2
+        1.2 If yes get ranges from where to download and go to 2
+        2. Check if server supports Range
+        2.1 If no go to 3
+        2.2 If yes go to 4
+        3 Set entire file as next chunk in info entry and go to 5
+        4 Set the range of next chunk to download in info entry and go to 5
+        5 Download chunk
+        6 Update info entry (either remove file or set which is next chunk)
+        7 Is end of current chunk also EOF ?
+        7.1 If no go to 4
+        7.2 If yes go to 8
+        8 Do cleanups and call callback for current file 
+        */
+
         // set url
         curl_easy_setopt(m_curl, CURLOPT_URL, url);
 

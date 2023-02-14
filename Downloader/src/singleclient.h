@@ -11,7 +11,7 @@ namespace DownloaderLib
     {
     public:
         SingleClient();
-        //SingleClient(const char* agent);
+        SingleClient(const char* agent);
         virtual ~SingleClient();
 
         std::string get(const char* url);
