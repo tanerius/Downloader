@@ -25,6 +25,11 @@ void foo(int x, const char* p)
 int main()
 {
     auto dlInstance = new DownloaderLib::Downloader();
+    dlInstance->TestDownload();
+    return 0;
+
+    /*
+    auto dlInstance = new DownloaderLib::Downloader();
     
     // test some https downloads
     
@@ -41,7 +46,7 @@ int main()
     std::string file = p;
     std::cout << "Downloaded: " << p << std::endl;
         });
-    /*
+    
     // test some http downloads
     dlInstance->download("http://home.tanerius.com/samples/jpgs/sample3.jpg", "./");
     dlInstance->download("http://home.tanerius.com/samples/jpgs/sample4.jpg", "./");
@@ -56,6 +61,7 @@ int main()
     DownloaderLib::Downloader::instance()->download("http://home.tanerius.com/samples/jpgs/sample6.jpg", "./", "custom.jpg");
 
     */
-    system("pause");
-    return 0;
+    //system("pause");
+    //return 0;
+
 }

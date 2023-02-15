@@ -1,7 +1,5 @@
 #pragma once
 #include "common.h"
-#include <string>
-#include <curl/curl.h>
 
 namespace DownloaderLib {
 
@@ -19,6 +17,7 @@ namespace DownloaderLib {
         void safeDecrement();
         std::mutex m_threadMtx;
         std::mutex m_callbackMtx;
+        void TestDownload();
 
     private:
         std::thread memberThread(const char* url, const char* filePath, void (*func)(int, const char*));

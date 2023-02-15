@@ -1,6 +1,8 @@
 #include "curldownloader.h"
 #include "singleclient.h"
-
+#include <fstream>
+#include <iostream>
+#include <string>
 
 namespace DownloaderLib {
 
@@ -14,9 +16,15 @@ namespace DownloaderLib {
     std::thread Downloader::memberThread(const char* url, const char* filePath, void (*func)(int, const char*)) {
         return std::thread([=] {
             SingleClient sc;
-            sc.download(url, filePath, func, &m_threadMtx);
+            sc.download(url, filePath, func, nullptr);
             safeDecrement();
             });
+    }
+
+    void Downloader::TestDownload()
+    {
+        SingleClient sc;
+        sc.download("https://home.tanerius.com/samples/files/50MB.bin", ".\\50MB.bin", nullptr, nullptr);
     }
 
 
@@ -57,4 +65,6 @@ namespace DownloaderLib {
         while (str[size] != '\0') size++;
         return size;
     }
+
+    
 }
