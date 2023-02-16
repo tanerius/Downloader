@@ -1,5 +1,5 @@
 #pragma once
-#include "Common.h"
+#include "./common.h"
 #include <curl/curl.h>
 #include <vector>
 #include <string>
@@ -34,8 +34,8 @@ namespace DownloaderLib
     class SingleClient
     {
     public:
-
-        struct ResourceStatus {
+        struct ResourceStatus
+        {
             bool IsValidated = false;
             long ResponseCode = 0;
             bool CanAcceptRanges = false;
@@ -46,7 +46,7 @@ namespace DownloaderLib
         };
 
         SingleClient();
-        SingleClient(size_t chunkSize, const char* agent);
+        SingleClient(size_t chunkSize, const char *agent);
         virtual ~SingleClient();
         void SetChunkSize(size_t s);
 
@@ -54,11 +54,10 @@ namespace DownloaderLib
          Download url and rename it to satisfy filepath
          */
         DownloadResult download(
-            const char* url, 
-            const char* filepath, 
-            void (*funcCompleted)(int, const char*),
-            int (*funcProgress)(void*, double, double, double, double) = nullptr
-            );
+            const char *url,
+            const char *filepath,
+            void (*funcCompleted)(int, const char *),
+            int (*funcProgress)(void *, double, double, double, double) = nullptr);
 
     private:
         enum FileMetaStatus
@@ -68,37 +67,37 @@ namespace DownloaderLib
             S_ERROR
         };
 
-        static size_t writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
-        static size_t writeToString(char* ptr, size_t size, size_t nmemb, std::string& sp);
+        static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
+        static size_t writeToString(char *ptr, size_t size, size_t nmemb, std::string &sp);
         std::string genRandomString(const int len);
-        
-        bool validateResource(const char* url);
-        static size_t CurlHeaderCallback(char* buffer,
-            size_t size,
-            size_t nitems,
-            ResourceStatus* userdata);
+
+        bool validateResource(const char *url);
+        static size_t CurlHeaderCallback(char *buffer,
+                                         size_t size,
+                                         size_t nitems,
+                                         ResourceStatus *userdata);
 
         void initCURL();
 
-        void CleanString(std::string&);
+        void CleanString(std::string &);
 
         // HTTP Statuses
-        const long GetLastResponseCode() const;
-        std::string GetAttribute(const char* attr);
+        long GetLastResponseCode() const;
+        std::string GetAttribute(const char *attr);
         std::string GetETag();
         std::string GetAcceptRangesValue();
         std::string GetLastModified();
         std::string GetContentLength();
         void PopulateResourceMetadata(const CURLcode cc);
         void DebugPrintResourceMeta();
-        DownloadResult ReadMetaFile(SFileMetaData& md, const char* filename);
-        const DownloadResult CreateSparseFile(const char* filePath, const SFileMetaData& fileMeta);
-         
+        DownloadResult ReadMetaFile(SFileMetaData &md, const char *filename);
+        DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta);
+
     private:
-        CURL* m_curl;
-        //curl_off_t m_lastruntime;
+        CURL *m_curl;
+        // curl_off_t m_lastruntime;
         size_t m_chunkSize = 4194304; // 4 MB
         bool m_isProperlyInitialized = false;
-        SingleClient::ResourceStatus* m_resourceStatus = nullptr;
+        SingleClient::ResourceStatus *m_resourceStatus = nullptr;
     };
 }

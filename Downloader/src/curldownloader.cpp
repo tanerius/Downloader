@@ -4,21 +4,22 @@
 #include <iostream>
 #include <string>
 
-namespace DownloaderLib {
+namespace DownloaderLib
+{
 
-    Downloader::Downloader() :
-        m_threadCount(0) {}
+    Downloader::Downloader() : m_threadCount(0) {}
 
     Downloader::~Downloader()
     {
     }
 
-    std::thread Downloader::memberThread(const char* url, const char* filePath, void (*func)(int, const char*)) {
-        return std::thread([=] {
+    std::thread Downloader::memberThread(const char *url, const char *filePath, void (*func)(int, const char *))
+    {
+        return std::thread([=]
+                           {
             SingleClient sc;
             sc.download(url, filePath, func, nullptr);
-            safeDecrement();
-            });
+            safeDecrement(); });
     }
 
     void Downloader::TestDownload()
@@ -27,8 +28,7 @@ namespace DownloaderLib {
         sc.download("https://home.tanerius.com/samples/files/50MB.bin", ".\\50MB.bin", nullptr, nullptr);
     }
 
-
-    int Downloader::download(const char* url, const char* filePath, void (*func)(int, const char*))
+    int Downloader::download(const char *url, const char *filePath, void (*func)(int, const char *))
     {
         // check thread count
         bool canCreateThread = false;
@@ -58,13 +58,14 @@ namespace DownloaderLib {
         m_threadMtx.unlock();
     }
 
-    const int Downloader::stringSize(const char* str)
+    int Downloader::stringSize(const char *str)
     {
-        if (str == nullptr) return 0;
+        if (str == nullptr)
+            return 0;
         int size = 0;
-        while (str[size] != '\0') size++;
+        while (str[size] != '\0')
+            size++;
         return size;
     }
 
-    
 }

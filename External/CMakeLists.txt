@@ -19,21 +19,30 @@ endif()
 # 2. Check all submodules to make sure theyre there
 ### curl settings so we dont build unnecessary stuff 
 
+if(WIN32)
+    option(CURL_WERROR "Turn compiler warnings into errors" ON)
+    option(PICKY_COMPILER "Enable picky compiler options" ON)
+    option(BUILD_CURL_EXE "Set to ON to build curl executable." OFF)
+    option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+    option(ENABLE_ARES "Set to ON to enable c-ares support" OFF)
+    option(CURL_STATIC_CRT "Set to ON to build libcurl with static CRT on Windows (/MT)." OFF)
+    option(ENABLE_INET_PTON "Set to OFF to prevent usage of inet_pton when building against modern SDKs while still requiring compatibility with older Windows versions, such as Windows XP, Windows Server 2003 etc." ON)
+    option(ENABLE_UNICODE "Set to ON to use the Unicode version of the Windows API functions" ON)
+    option(CURL_USE_SCHANNEL "enable Windows native SSL/TLS" ON) 
+    option(CURL_ENABLE_SSL ON)
 
-option(CURL_WERROR "Turn compiler warnings into errors" ON)
-option(PICKY_COMPILER "Enable picky compiler options" ON)
-option(BUILD_CURL_EXE "Set to ON to build curl executable." OFF)
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-option(ENABLE_ARES "Set to ON to enable c-ares support" OFF)
-option(CURL_STATIC_CRT "Set to ON to build libcurl with static CRT on Windows (/MT)." OFF)
-option(ENABLE_INET_PTON "Set to OFF to prevent usage of inet_pton when building against modern SDKs while still requiring compatibility with older Windows versions, such as Windows XP, Windows Server 2003 etc." ON)
-option(ENABLE_UNICODE "Set to ON to use the Unicode version of the Windows API functions" ON)
-option(CURL_USE_SCHANNEL "enable Windows native SSL/TLS" ON) 
-option(CURL_ENABLE_SSL ON)
-
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/External/curl/CMakeLists.txt")
-    message(FATAL_ERROR "Submodule curl not downloaded")
+    if(NOT EXISTS "${PROJECT_SOURCE_DIR}/External/curl/CMakeLists.txt")
+        message(FATAL_ERROR "Submodule curl not downloaded")
+    else()
+        add_subdirectory(curl)
+    endif()
 else()
-	add_subdirectory(curl)
-endif()
+    set(CURL_PATH "/usr/local/Cellar/curl/7.75.0")
 
+    find_library(
+        LIB_CURL
+        NAMES
+            curl
+        PATHS 
+            ${CURL_PATH}/lib)
+endif()

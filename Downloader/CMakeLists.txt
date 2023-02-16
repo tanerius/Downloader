@@ -14,12 +14,22 @@ add_library(DownloaderLib STATIC
 
 target_compile_features(DownloaderLib PRIVATE cxx_std_17)
 
-target_include_directories(DownloaderLib 
-    PUBLIC src)
+if(WIN32)
+    target_include_directories(DownloaderLib 
+        PUBLIC src)
 
-target_link_libraries(DownloaderLib
-    PUBLIC CURL::libcurl
-)
+    target_link_libraries(DownloaderLib
+        PUBLIC CURL::libcurl
+    )
+else()
+    target_link_libraries(
+        DownloaderLib
+            ${LIB_CURL})
+
+    target_include_directories(
+        DownloaderLib 
+            PUBLIC "${CURL_PATH}/include")
+endif()
 
 if(MSVC)
   target_compile_options(DownloaderLib PRIVATE /W4 /WX)

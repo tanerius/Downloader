@@ -13,7 +13,7 @@ OPTION(DOWNLOADER_LINK_STATICALLY		"Build static library"					On)
 OPTION(DOWNLOADER_DEBUG					"Enable debugging logs and asserts"		On)
 
 # Set some super global stuff here
-configure_file(Configurables/versions.h.in ${FARSCAPE_BINARY_DIR}/generated/Versions.h @ONLY)
+configure_file(Configurables/versions.h.in Downloader/src/Versions.h @ONLY)
 
 
 # Add all required externals
