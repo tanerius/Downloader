@@ -59,6 +59,7 @@ namespace DownloaderLib
         if (m_resourceStatus == nullptr)
         {
             std::cout << "Resource data null..." << std::endl;
+            return;
         }
 
         std::cout << "Can accept ranges..." << m_resourceStatus->CanAcceptRanges << std::endl;
@@ -70,7 +71,7 @@ namespace DownloaderLib
         std::cout << "ChunkSize..." << m_chunkSize << std::endl;
     }
 
-    void SingleClient::download(
+    DownloadResult SingleClient::download(
         const char* url, 
         const char* filepath, 
         void (*funcCompleted)(int, const char*),
@@ -78,10 +79,54 @@ namespace DownloaderLib
     )
     {
         bool val = validateResource(url);
-        if (val) {
-            DebugPrintResourceMeta();
-            return;
-        };
+        if (!val) {
+            if ( funcCompleted != nullptr )
+                funcCompleted(DownloadResult::COULD_NOT_VALIDATE, "Could not validate resource");
+            return DownloadResult::COULD_NOT_VALIDATE;
+        }
+
+        DebugPrintResourceMeta();
+
+        // Get filename
+        auto sFilePath = std::filesystem::path(filepath);
+        SFileMetaData metaData;
+
+        // check if sparse file exists
+        std::string tmpSparseFile = sFilePath.parent_path().string() + PathSeparator + sFilePath.filename().stem().string() + ".tmp";
+        if (std::filesystem::exists(tmpSparseFile))
+        {
+            metaData.totalSize = m_resourceStatus->ContentLength;
+            auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
+            if (resMeta != OK)
+            {
+                if (funcCompleted != nullptr)
+                    funcCompleted(resMeta, "Error reading resource meta information!");
+                std::cout << "Problem reading meta " << resMeta << std::endl;
+                return resMeta;
+            }
+        }
+        else
+        {
+            metaData.totalSize = m_resourceStatus->ContentLength;
+            metaData.chunkSize = m_chunkSize;
+            metaData.hasChunkWritten = 0;
+            metaData.totalChunks = metaData.totalSize / m_chunkSize;
+            if (metaData.totalSize % m_chunkSize != 0)
+                metaData.totalChunks++;
+
+            // this is a fresh download
+            auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData);
+
+            if (resMeta != OK)
+            {
+                if (funcCompleted != nullptr)
+                    funcCompleted(resMeta, "Error creating resource meta information!");
+                std::cout << "Problem creating meta " << resMeta << std::endl;
+                return resMeta;
+            }
+        }
+
+        std::cout << "The path : " << tmpSparseFile << std::endl;
         /*
         Pseudo steps:
         1. Check if file has been previously stopped
@@ -100,8 +145,8 @@ namespace DownloaderLib
         8 Do cleanups and call callback for current file 
         */
 
-        if (false)
-            return;
+        if (true)
+            return DownloadResult::OK;
 
         // set url
         curl_easy_setopt(m_curl, CURLOPT_URL, url);
@@ -156,7 +201,9 @@ namespace DownloaderLib
 
             if (funcCompleted != nullptr)
                 funcCompleted(ret, filepath);
+
         }
+        return DownloadResult::OK;
     }
 
     size_t SingleClient::writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream)
@@ -197,15 +244,46 @@ namespace DownloaderLib
 #endif
     }
 
-    const bool SingleClient::createSparseFile(const char* filePath, const unsigned long fileSize)
+    DownloadResult SingleClient::ReadMetaFile(SFileMetaData& md, const char* filename)
+    {
+        DownloadResult res = OK;
+        std::ifstream ifs(filename, std::ios::binary);
+
+        if (!ifs) 
+            return COULD_NOT_READ_METAFILE;
+
+        md.checkCode = 5; // in the end should be 2308075
+        auto oldTotal = md.totalSize;
+        ifs.seekg(md.totalSize - sizeof(SFileMetaData), std::ios::beg);
+        ifs.read(reinterpret_cast<char*>(&md), sizeof(SFileMetaData));
+
+        if (ifs.gcount() != sizeof(SFileMetaData) || md.checkCode != 2308075)
+            res = CORRUPT_METAFILE;
+
+        if (oldTotal != md.totalSize)
+        {
+            res = RESOURCE_SIZE_CHANGED;
+        }
+
+        ifs.close();
+        return res;
+    }
+
+    /// <summary>
+    /// Writes meta info at the end to be overwritten with the last chunk.
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="fileMeta"></param>
+    /// <returns></returns>
+    const DownloadResult SingleClient::CreateSparseFile(const char* filePath, const SFileMetaData& fileMeta)
     {
         std::ofstream ofs(filePath, std::ios::binary | std::ios::out);
         if ((ofs.rdstate() & std::ifstream::failbit) != 0)
-            return true;
-        ofs.seekp(sizeof(SFileMetaData) + fileSize);
-        ofs.write("", 1);
+            return CANNOT_CREATE_METAFILE;
+        ofs.seekp(fileMeta.totalSize - sizeof(SFileMetaData));
+        ofs.write((char*)&fileMeta, sizeof(fileMeta));
         ofs.close();
-        return false;
+        return OK;
     }
 
     size_t SingleClient::CurlHeaderCallback(

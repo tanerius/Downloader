@@ -8,9 +8,22 @@ namespace DownloaderLib
 {
     struct SFileMetaData
     {
+        curl_off_t totalSize = 0;
+        curl_off_t totalChunks;
         size_t chunkSize;
-        size_t totalChunks;
-        size_t lastDownloadedChunk = -1;
+        size_t lastDownloadedChunk = 0;
+        size_t checkCode = 2308075;
+        short hasChunkWritten = 0;
+    };
+
+    enum DownloadResult : int
+    {
+        OK = 0,
+        COULD_NOT_VALIDATE,
+        COULD_NOT_READ_METAFILE,
+        CORRUPT_METAFILE,
+        RESOURCE_SIZE_CHANGED,
+        CANNOT_CREATE_METAFILE
     };
 
     /**
@@ -38,7 +51,7 @@ namespace DownloaderLib
         /**
          Download url and rename it to satisfy filepath
          */
-        void download(
+        DownloadResult download(
             const char* url, 
             const char* filepath, 
             void (*funcCompleted)(int, const char*),
@@ -56,7 +69,7 @@ namespace DownloaderLib
         static size_t writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
         static size_t writeToString(char* ptr, size_t size, size_t nmemb, std::string& sp);
         std::string genRandomString(const int len);
-        const bool createSparseFile(const char* filePath, const unsigned long fileSize);
+        const DownloadResult CreateSparseFile(const char* filePath, const SFileMetaData& fileMeta);
         bool validateResource(const char* url);
         static size_t CurlHeaderCallback(char* buffer,
             size_t size,
@@ -76,6 +89,7 @@ namespace DownloaderLib
         std::string GetContentLength();
         void PopulateResourceMetadata(const CURLcode cc);
         void DebugPrintResourceMeta();
+        DownloadResult ReadMetaFile(SFileMetaData& md, const char* filename);
          
     private:
         CURL* m_curl;
