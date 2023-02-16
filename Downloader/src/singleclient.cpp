@@ -11,6 +11,7 @@ namespace DownloaderLib
 
     SingleClient::SingleClient()
     {
+        SetChunkSize(4194304); // 4 MB chunks default
         initCURL();
         curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, curl_version());
     }
@@ -53,6 +54,22 @@ namespace DownloaderLib
         return tmp_s;
     }
 
+    void SingleClient::DebugPrintResourceMeta()
+    {
+        if (m_resourceStatus == nullptr)
+        {
+            std::cout << "Resource data null..." << std::endl;
+        }
+
+        std::cout << "Can accept ranges..." << m_resourceStatus->CanAcceptRanges << std::endl;
+        std::cout << "ContentLength..." << m_resourceStatus->ContentLength << std::endl;
+        std::cout << "DownloadedSize..." << m_resourceStatus->DownloadedSize << std::endl;
+        std::cout << "IsValidated..." << m_resourceStatus->IsValidated << std::endl;
+        std::cout << "ResponseCode..." << m_resourceStatus->ResponseCode << std::endl;
+        std::cout << "URL..." << m_resourceStatus->URL << std::endl;
+        std::cout << "ChunkSize..." << m_chunkSize << std::endl;
+    }
+
     void SingleClient::download(
         const char* url, 
         const char* filepath, 
@@ -60,7 +77,11 @@ namespace DownloaderLib
         int (*funcProgress)(void*, double, double, double, double)
     )
     {
-        validateResource(url);
+        bool val = validateResource(url);
+        if (val) {
+            DebugPrintResourceMeta();
+            return;
+        };
         /*
         Pseudo steps:
         1. Check if file has been previously stopped
@@ -257,7 +278,13 @@ namespace DownloaderLib
     {
         if (cc == CURLE_OK) {
             curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &m_resourceStatus->ResponseCode);
-            curl_easy_getinfo(m_curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &m_resourceStatus->ContentLength);
+
+            auto tmp = curl_easy_getinfo(m_curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &m_resourceStatus->ContentLength);
+            if (tmp != CURLE_OK)
+                m_resourceStatus->ContentLength = -1;
+            tmp = curl_easy_getinfo(m_curl, CURLINFO_SIZE_DOWNLOAD_T, &m_resourceStatus->DownloadedSize);
+            if (tmp != CURLE_OK)
+                m_resourceStatus->DownloadedSize = -1;
             
             // Check if range download is supported
             std::string r = GetAcceptRangesValue();
@@ -275,7 +302,11 @@ namespace DownloaderLib
     }
 
     bool SingleClient::validateResource(const char* url) {
+        // Set the stuff up first!
+        if (!m_isProperlyInitialized) return false;
+
         m_resourceStatus = new SingleClient::ResourceStatus();
+        m_resourceStatus->URL = url;
 
         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "HEAD");
         curl_easy_setopt(m_curl, CURLOPT_URL, url);
@@ -289,9 +320,6 @@ namespace DownloaderLib
 
         auto res = curl_easy_perform(m_curl);
         PopulateResourceMetadata(res);
-
-        std::cout << "Can accept ranges: " << m_resourceStatus->CanAcceptRanges << std::endl;
-        
         return m_resourceStatus->IsValidated;
     }
 }

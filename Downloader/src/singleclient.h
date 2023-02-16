@@ -10,7 +10,7 @@ namespace DownloaderLib
     {
         size_t chunkSize;
         size_t totalChunks;
-        size_t currentChunk;
+        size_t lastDownloadedChunk = -1;
     };
 
     /**
@@ -25,6 +25,8 @@ namespace DownloaderLib
             long ResponseCode = 0;
             bool CanAcceptRanges = false;
             curl_off_t ContentLength = -1;
+            curl_off_t DownloadedSize = -1;
+            std::string URL;
             std::vector<std::string> Headers;
         };
 
@@ -73,6 +75,7 @@ namespace DownloaderLib
         std::string GetLastModified();
         std::string GetContentLength();
         void PopulateResourceMetadata(const CURLcode cc);
+        void DebugPrintResourceMeta();
          
     private:
         CURL* m_curl;
