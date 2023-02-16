@@ -32,7 +32,7 @@ namespace DownloaderLib
     {
         m_isProperlyInitialized = false;
         m_chunkSize = s;
-        if (m_chunkSize % 1024 == 0)
+        if (m_chunkSize % 1024 == 0 && m_chunkSize > sizeof(SFileMetaData))
         {
             m_isProperlyInitialized = true;
         }
@@ -78,14 +78,19 @@ namespace DownloaderLib
         int (*funcProgress)(void*, double, double, double, double)
     )
     {
+        if (m_chunkSize <= sizeof(SFileMetaData))
+        {
+            if (funcCompleted != nullptr)
+                funcCompleted(DownloadResult::CHUNK_SIZE_TOO_SMALL, "Chunk size cannot be smaller than SFileMetaData");
+            return CHUNK_SIZE_TOO_SMALL;
+        }
+
         bool val = validateResource(url);
         if (!val) {
             if ( funcCompleted != nullptr )
                 funcCompleted(DownloadResult::COULD_NOT_VALIDATE, "Could not validate resource");
             return DownloadResult::COULD_NOT_VALIDATE;
         }
-
-        DebugPrintResourceMeta();
 
         // Get filename
         auto sFilePath = std::filesystem::path(filepath);
@@ -101,7 +106,6 @@ namespace DownloaderLib
             {
                 if (funcCompleted != nullptr)
                     funcCompleted(resMeta, "Error reading resource meta information!");
-                std::cout << "Problem reading meta " << resMeta << std::endl;
                 return resMeta;
             }
         }
@@ -121,12 +125,12 @@ namespace DownloaderLib
             {
                 if (funcCompleted != nullptr)
                     funcCompleted(resMeta, "Error creating resource meta information!");
-                std::cout << "Problem creating meta " << resMeta << std::endl;
                 return resMeta;
             }
         }
 
-        std::cout << "The path : " << tmpSparseFile << std::endl;
+        DebugPrintResourceMeta();
+
         /*
         Pseudo steps:
         1. Check if file has been previously stopped

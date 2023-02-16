@@ -69,7 +69,7 @@ namespace DownloaderLib
         static size_t writeToFile(void* ptr, size_t size, size_t nmemb, FILE* stream);
         static size_t writeToString(char* ptr, size_t size, size_t nmemb, std::string& sp);
         std::string genRandomString(const int len);
-        const DownloadResult CreateSparseFile(const char* filePath, const SFileMetaData& fileMeta);
+        
         bool validateResource(const char* url);
         static size_t CurlHeaderCallback(char* buffer,
             size_t size,
@@ -90,6 +90,7 @@ namespace DownloaderLib
         void PopulateResourceMetadata(const CURLcode cc);
         void DebugPrintResourceMeta();
         DownloadResult ReadMetaFile(SFileMetaData& md, const char* filename);
+        const DownloadResult CreateSparseFile(const char* filePath, const SFileMetaData& fileMeta);
          
     private:
         CURL* m_curl;
