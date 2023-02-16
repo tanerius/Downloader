@@ -23,7 +23,9 @@ namespace DownloaderLib
         COULD_NOT_READ_METAFILE,
         CORRUPT_METAFILE,
         RESOURCE_SIZE_CHANGED,
-        CANNOT_CREATE_METAFILE
+        CANNOT_CREATE_METAFILE,
+        CHUNK_SIZE_TOO_SMALL,
+        RESOURCE_HAS_ZERO_SIZE,
     };
 
     /**

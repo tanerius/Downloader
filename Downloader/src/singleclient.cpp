@@ -118,6 +118,13 @@ namespace DownloaderLib
             if (metaData.totalSize % m_chunkSize != 0)
                 metaData.totalChunks++;
 
+            if (metaData.totalChunks == 0)
+            {
+                if (funcCompleted != nullptr)
+                    funcCompleted(RESOURCE_HAS_ZERO_SIZE, "Resource has zero size!");
+                return RESOURCE_HAS_ZERO_SIZE;
+            }
+
             // this is a fresh download
             auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData);
 
