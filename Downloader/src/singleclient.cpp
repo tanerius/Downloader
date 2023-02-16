@@ -195,10 +195,6 @@ namespace DownloaderLib
     {
         std::string temp = std::string(buffer, nitems);
 
-        if (!h->IsInitialized)
-        {
-            h->IsInitialized = true;
-        }
         if(temp.size() > 3)
             h->Headers.push_back(temp);
 
@@ -247,7 +243,38 @@ namespace DownloaderLib
         return GetAttribute("ETag: ");
     }
 
-    SingleClient::ResourceStatus* SingleClient::validateResource(const char* url) {
+    std::string SingleClient::GetLastModified()
+    {
+        return GetAttribute("Last-Modified: ");
+    }
+
+    std::string SingleClient::GetContentLength()
+    {
+        return GetAttribute("Content-Length: ");
+    }
+
+    void SingleClient::PopulateResourceMetadata(const CURLcode cc)
+    {
+        if (cc == CURLE_OK) {
+            curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &m_resourceStatus->ResponseCode);
+            curl_easy_getinfo(m_curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &m_resourceStatus->ContentLength);
+            
+            // Check if range download is supported
+            std::string r = GetAcceptRangesValue();
+
+            if (r == "bytes")
+                m_resourceStatus->CanAcceptRanges = true;
+            else
+                m_resourceStatus->CanAcceptRanges = false;
+            m_resourceStatus->IsValidated = true;
+        }
+        else
+        {
+            m_resourceStatus->IsValidated = false;
+        }
+    }
+
+    bool SingleClient::validateResource(const char* url) {
         m_resourceStatus = new SingleClient::ResourceStatus();
 
         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "HEAD");
@@ -261,22 +288,10 @@ namespace DownloaderLib
         curl_easy_setopt(m_curl, CURLOPT_HEADERDATA, m_resourceStatus);
 
         auto res = curl_easy_perform(m_curl);
+        PopulateResourceMetadata(res);
 
-        if (res == CURLE_OK) {
-            curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &m_resourceStatus->ResponseCode);
-        }
-
-        std::cout << "Last response: " << GetLastResponseCode() << std::endl;
-        std::string s = GetETag();
-        std::cout << s.size() <<  " ETag: ***" << s << "***" <<std::endl;
-        s = GetAcceptRangesValue();
-        std::cout << s.size() << " AcceptRanges: ***" << s << "***" << std::endl;
-
-        for (size_t i = 0; i < (m_resourceStatus->Headers).size(); i++) {
-            std::cout << m_resourceStatus->Headers[i].size() << " : H: " << m_resourceStatus->Headers[i];
-        }
-
-
-        return m_resourceStatus;
+        std::cout << "Can accept ranges: " << m_resourceStatus->CanAcceptRanges << std::endl;
+        
+        return m_resourceStatus->IsValidated;
     }
 }

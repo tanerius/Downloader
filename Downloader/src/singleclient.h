@@ -21,8 +21,10 @@ namespace DownloaderLib
     public:
 
         struct ResourceStatus {
-            bool IsInitialized = false;
+            bool IsValidated = false;
             long ResponseCode = 0;
+            bool CanAcceptRanges = false;
+            curl_off_t ContentLength = -1;
             std::vector<std::string> Headers;
         };
 
@@ -53,7 +55,7 @@ namespace DownloaderLib
         static size_t writeToString(char* ptr, size_t size, size_t nmemb, std::string& sp);
         std::string genRandomString(const int len);
         const bool createSparseFile(const char* filePath, const unsigned long fileSize);
-        ResourceStatus* validateResource(const char* url);
+        bool validateResource(const char* url);
         static size_t CurlHeaderCallback(char* buffer,
             size_t size,
             size_t nitems,
@@ -68,6 +70,9 @@ namespace DownloaderLib
         std::string GetAttribute(const char* attr);
         std::string GetETag();
         std::string GetAcceptRangesValue();
+        std::string GetLastModified();
+        std::string GetContentLength();
+        void PopulateResourceMetadata(const CURLcode cc);
          
     private:
         CURL* m_curl;
