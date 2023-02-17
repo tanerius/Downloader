@@ -9,8 +9,8 @@ namespace DownloaderLib
     struct SFileMetaData
     {
         curl_off_t totalSize = 0;
-        curl_off_t totalChunks;
-        size_t chunkSize;
+        curl_off_t totalChunks = 0;
+        size_t chunkSize = 0;
         size_t lastDownloadedChunk = 0;
         size_t checkCode = 2308075;
         short hasChunkWritten = 0;
@@ -26,6 +26,13 @@ namespace DownloaderLib
         CANNOT_CREATE_METAFILE,
         CHUNK_SIZE_TOO_SMALL,
         RESOURCE_HAS_ZERO_SIZE,
+        DOWNLOADER_NOT_INITIALIZED,
+        DOWNLOADER_EXECUTE_ERROR,
+        INVALID_RESPONSE,
+        CORRUPT_CHUNK_CALCULATION,
+        CANNOT_ACCESS_METAFILE,
+        CANNOT_WRITE_DOWNLOADED_DATA,
+        CANNOT_WRITE_META_DATA,
     };
 
     /**
@@ -71,7 +78,7 @@ namespace DownloaderLib
         static size_t writeToString(char *ptr, size_t size, size_t nmemb, std::string &sp);
         std::string genRandomString(const int len);
 
-        bool validateResource(const char *url);
+        DownloadResult validateResource(const char *url);
         static size_t CurlHeaderCallback(char *buffer,
                                          size_t size,
                                          size_t nitems,
@@ -80,6 +87,7 @@ namespace DownloaderLib
         void initCURL();
 
         void CleanString(std::string &);
+        DownloadResult ProcessResultAndCleanup(const DownloadResult result, void (*funcCompleted)(int, const char*), const char* msg);
 
         // HTTP Statuses
         long GetLastResponseCode() const;
@@ -91,7 +99,14 @@ namespace DownloaderLib
         void PopulateResourceMetadata(const CURLcode cc);
         void DebugPrintResourceMeta();
         DownloadResult ReadMetaFile(SFileMetaData &md, const char *filename);
-        DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta);
+        DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
+        DownloadResult WriteChunkData(
+            const char* filePath,
+            const char* downloadedData,
+            const unsigned long long chunkSize,
+            SFileMetaData& md,
+            const unsigned long long startingOffset,
+            bool isEof);
 
     private:
         CURL *m_curl;

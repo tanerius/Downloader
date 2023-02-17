@@ -73,151 +73,264 @@ namespace DownloaderLib
         std::cout << "ChunkSize..." << m_chunkSize << std::endl;
     }
 
+    DownloadResult SingleClient::ProcessResultAndCleanup(
+        const DownloadResult result, 
+        void (*funcCompleted)(int, const char*), 
+        const char* msg)
+    {
+        if (funcCompleted != nullptr)
+            funcCompleted(result, msg);
+
+        if (m_resourceStatus != nullptr)
+            delete m_resourceStatus;
+        return result;
+    }
+
     DownloadResult SingleClient::download(
         const char *url,
         const char *filepath,
         void (*funcCompleted)(int, const char *),
         int (*funcProgress)(void *, double, double, double, double))
     {
-        if (m_chunkSize <= sizeof(SFileMetaData))
-        {
-            if (funcCompleted != nullptr)
-                funcCompleted(DownloadResult::CHUNK_SIZE_TOO_SMALL, "Chunk size cannot be smaller than SFileMetaData");
-            return CHUNK_SIZE_TOO_SMALL;
-        }
+        m_resourceStatus = nullptr;
 
-        bool val = validateResource(url);
-        if (!val)
-        {
-            if (funcCompleted != nullptr)
-                funcCompleted(DownloadResult::COULD_NOT_VALIDATE, "Could not validate resource");
-            return DownloadResult::COULD_NOT_VALIDATE;
-        }
+        if (m_chunkSize <= sizeof(SFileMetaData))
+            return ProcessResultAndCleanup(DownloadResult::CHUNK_SIZE_TOO_SMALL, funcCompleted, "Chunk size cannot be smaller than SFileMetaData");
+
+        DownloadResult val = validateResource(url);
+        if (val != DownloadResult::OK)
+            return ProcessResultAndCleanup(val, funcCompleted, "Could not validate resource");
 
         // Get filename
         auto sFilePath = std::filesystem::path(filepath);
         SFileMetaData metaData;
+        metaData.totalChunks = 0;
+        metaData.chunkSize = m_chunkSize;
 
-        // check if sparse file exists
+        // Check if requested resource is of good size
+        bool doRangedDownload = static_cast<curl_off_t>(m_chunkSize) < m_resourceStatus->ContentLength;
+
         std::string tmpSparseFile = sFilePath.parent_path().string() + PathSeparator + sFilePath.filename().stem().string() + ".tmp";
-        if (std::filesystem::exists(tmpSparseFile))
+        bool existsSparseFile = std::filesystem::exists(tmpSparseFile);
+
+        if (doRangedDownload)
         {
-            metaData.totalSize = m_resourceStatus->ContentLength;
-            auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
-            if (resMeta != OK)
+            /*
+            * RANGED DOWNLOAD
+            * This is the case where the file is large and we should enable download resuming
+            */
+
+            // Check if sparse file exists
+            if (existsSparseFile)
             {
+                metaData.totalSize = m_resourceStatus->ContentLength;
+                auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
+                if (resMeta != OK)
+                {
+                    return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");;
+                }
+            }
+            else
+            {
+                metaData.totalSize = m_resourceStatus->ContentLength;
+                metaData.chunkSize = m_chunkSize;
+                metaData.hasChunkWritten = 0;
+                metaData.totalChunks = metaData.totalSize / m_chunkSize;
+                if (metaData.totalSize % m_chunkSize != 0)
+                    metaData.totalChunks++;
+
+                if (metaData.totalChunks == 0)
+                    return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, funcCompleted, "Resource has zero size");
+
+                // this is a fresh download
+                auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData, true);
+
+                if (resMeta != OK)
+                    return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
+            }
+
+            while (metaData.lastDownloadedChunk < metaData.totalChunks)
+            {
+                size_t nextChunk = metaData.lastDownloadedChunk + 1;
+                // set url
+                curl_easy_setopt(m_curl, CURLOPT_URL, url);
+
+                // forward all data to this func
+                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
+
+                bool eof = false;
+                char* downloadedData = nullptr;
+
+                unsigned long long segmentStart = (nextChunk - 1) * metaData.chunkSize;
+                unsigned long long segmentEnd = segmentStart + metaData.chunkSize - 1;
+
+                if (segmentEnd > static_cast<unsigned long long>(metaData.totalSize))
+                {
+                    segmentEnd = metaData.totalSize;
+                    eof = true;
+                }
+
+                unsigned long long chunkSize = segmentEnd - segmentStart + 1;
+
+                if (segmentEnd < segmentStart)
+                    return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, funcCompleted, "Error in calculating chunk size");
+
+                std::string chunkRange = segmentStart + "-" + segmentEnd;
+
+                curl_easy_setopt(m_curl, CURLOPT_RANGE, chunkRange.c_str());
+
+                // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
+                curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, downloadedData);
+
+                if (funcProgress != nullptr)
+                {
+                    // Internal CURL progressmeter must be disabled if we provide our own callback
+                    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
+                    // Install the callback function (returning non ze`ro from this will stop curl
+                    curl_easy_setopt(m_curl, CURLOPT_PROGRESSFUNCTION, funcProgress);
+                }
+
+                // do it
+                CURLcode result = curl_easy_perform(m_curl);
+
+                if (result == CURLE_OK) // only assume 200 is correct
+                {
+                    // get HTTP response code
+                    int responseCode;
+                    result = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
+
+                    if (responseCode < 200 || responseCode >= 300)
+                        return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, funcCompleted, "Response code is bad");
+
+                    // write to file
+                    DownloadResult writeResult = WriteChunkData(tmpSparseFile.c_str(), downloadedData, chunkSize, metaData, segmentStart, eof);
+                    if (writeResult != DownloadResult::OK)
+                        return ProcessResultAndCleanup(writeResult, funcCompleted, "Was not able to write downloaded data");
+                }
+                else
+                    return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, funcCompleted, "Error performing the curl request");
+
                 if (funcCompleted != nullptr)
-                    funcCompleted(resMeta, "Error reading resource meta information!");
-                return resMeta;
+                    funcCompleted(DownloadResult::OK, filepath);
+
             }
         }
         else
         {
-            metaData.totalSize = m_resourceStatus->ContentLength;
-            metaData.chunkSize = m_chunkSize;
-            metaData.hasChunkWritten = 0;
-            metaData.totalChunks = metaData.totalSize / m_chunkSize;
-            if (metaData.totalSize % m_chunkSize != 0)
-                metaData.totalChunks++;
+            /*
+            * REGULAR DOWNLOAD
+            * This is the case where the file is too small to do a ranged download so do a regular one
+            */
 
-            if (metaData.totalChunks == 0)
-            {
-                if (funcCompleted != nullptr)
-                    funcCompleted(RESOURCE_HAS_ZERO_SIZE, "Resource has zero size!");
-                return RESOURCE_HAS_ZERO_SIZE;
-            }
-
-            // this is a fresh download
-            auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData);
+            if (existsSparseFile)
+                std::remove(tmpSparseFile.c_str());
+            
+            auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData, false);
 
             if (resMeta != OK)
+                return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
+
+            // set url
+            curl_easy_setopt(m_curl, CURLOPT_URL, url);
+
+            // forward all data to this func
+            curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
+
+            // open the file
+            FILE* file = nullptr;
+#ifdef __APPLE__
+            file = fopen(tmpFile.c_str(), "wb");
+            if (file && (file == 0))
+#else
+            auto res = fopen_s(&file, tmpSparseFile.c_str(), "wb");
+            if (file && (res == 0))
+#endif
+
             {
+                // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
+                curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, file);
+
+                if (funcProgress != nullptr)
+                {
+                    // Internal CURL progressmeter must be disabled if we provide our own callback
+                    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
+                    // Install the callback function (returning non zero from this will stop curl
+                    curl_easy_setopt(m_curl, CURLOPT_PROGRESSFUNCTION, funcProgress);
+                }
+
+                // do it
+                CURLcode result = curl_easy_perform(m_curl);
+
+                std::fclose(file);
+
+                
+                
+                int ret = 1;
+                if (result == CURLE_OK) // only assume 200 is correct
+                {
+                    // get HTTP response code
+                    int responseCode;
+                    result = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
+
+                    if(responseCode < 200 || responseCode >= 300)
+                        return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, funcCompleted, "Response code is bad");
+
+                    // check if destination file exists if so remove it
+                    std::remove(sFilePath.string().c_str());
+
+                    // rename it to real filename which does a move of the file so no need for explicit deletion
+                    ret = std::rename(tmpSparseFile.c_str(), sFilePath.string().c_str());
+                }
+                else
+                    return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, funcCompleted, "Error performing the curl request");
+
                 if (funcCompleted != nullptr)
-                    funcCompleted(resMeta, "Error creating resource meta information!");
-                return resMeta;
+                    funcCompleted(DownloadResult::OK, filepath);
             }
         }
 
         DebugPrintResourceMeta();
 
-        /*
-        Pseudo steps:
-        1. Check if file has been previously stopped
-        1.1 If no create an info entry for the file and go to 2
-        1.2 If yes get ranges from where to download and go to 2
-        2. Check if server supports Range
-        2.1 If no go to 3
-        2.2 If yes go to 4
-        3 Set entire file as next chunk in info entry and go to 5
-        4 Set the range of next chunk to download in info entry and go to 5
-        5 Download chunk
-        6 Update info entry (either remove file or set which is next chunk)
-        7 Is end of current chunk also EOF ?
-        7.1 If no go to 4
-        7.2 If yes go to 8
-        8 Do cleanups and call callback for current file
-        */
+        return DownloadResult::OK;
+    }
 
-        if (true)
-            return DownloadResult::OK;
+    DownloadResult SingleClient::WriteChunkData(
+        const char* filePath,
+        const char* downloadedData,
+        const unsigned long long chunkSize,
+        SFileMetaData& md,
+        const unsigned long long startingOffset,
+        bool isEof)
+    {
+        std::ofstream fs(filePath, std::ios::binary | std::ios::out | std::ios::in);
+        if ((fs.rdstate() & std::ifstream::failbit) != 0)
+            return DownloadResult::CANNOT_ACCESS_METAFILE;
 
-        // set url
-        curl_easy_setopt(m_curl, CURLOPT_URL, url);
-
-        // forward all data to this func
-        curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
-
-        // try to write a temp file instead of the real file
-        std::string tmpFile = genRandomString(20) + ".tmp";
-        // std::string tmpFile = filepath + ".tmp";
-
-        while (std::filesystem::exists(tmpFile))
-            tmpFile = genRandomString(10) + ".tmp";
-
-        // open the file
-        FILE *file = nullptr;
-#ifdef __APPLE__
-        file = fopen(tmpFile.c_str(), "wb");
-        if (file && (file == 0))
-#else
-        auto res = fopen_s(&file, tmpFile.c_str(), "wb");
-        if (file && (res == 0))
-#endif
-
+        // first write the data
+        fs.seekp(startingOffset);
+        fs.write(downloadedData, chunkSize);
+        
+        if (!fs.good())
         {
-            // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
-            curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, file);
-
-            if (funcProgress != nullptr)
-            {
-                // Internal CURL progressmeter must be disabled if we provide our own callback
-                curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
-                // Install the callback function (returnont non zero from this will stop curl
-                curl_easy_setopt(m_curl, CURLOPT_PROGRESSFUNCTION, funcProgress);
-            }
-
-            // do it
-            CURLcode result = curl_easy_perform(m_curl);
-
-            std::fclose(file);
-
-            // get HTTP response code
-            int responseCode;
-            curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
-            int ret = 1;
-            if (result == CURLE_OK && responseCode == 200) // only assume 200 is correct
-            {
-                // check if file exists if so remove it
-                std::remove(filepath);
-
-                // rename it to real filename which does a move of the file so no need for explicit deletion
-                ret = std::rename(tmpFile.c_str(), filepath);
-            }
-            std::remove(tmpFile.c_str()); // clean tmp file if non zero rename
-
-            if (funcCompleted != nullptr)
-                funcCompleted(ret, filepath);
+            fs.close();
+            return DownloadResult::CANNOT_WRITE_DOWNLOADED_DATA;
         }
+
+        if (isEof)
+        {
+            // done writing here and dl completed
+            fs.close();
+            return OK;
+        }
+        
+        // write metadata to file and close file
+        fs.seekp(md.totalSize - sizeof(SFileMetaData));
+        fs.write((char*)&md, sizeof(md));
+        fs.close();
+
+        if (!fs.good())
+            return DownloadResult::CANNOT_WRITE_META_DATA;
+
         return DownloadResult::OK;
     }
 
@@ -265,7 +378,7 @@ namespace DownloaderLib
         std::ifstream ifs(filename, std::ios::binary);
 
         if (!ifs)
-            return COULD_NOT_READ_METAFILE;
+            return DownloadResult::COULD_NOT_READ_METAFILE;
 
         md.checkCode = 5; // in the end should be 2308075
         auto oldTotal = md.totalSize;
@@ -273,11 +386,11 @@ namespace DownloaderLib
         ifs.read(reinterpret_cast<char *>(&md), sizeof(SFileMetaData));
 
         if (ifs.gcount() != sizeof(SFileMetaData) || md.checkCode != 2308075)
-            res = CORRUPT_METAFILE;
+            res = DownloadResult::CORRUPT_METAFILE;
 
         if (oldTotal != md.totalSize)
         {
-            res = RESOURCE_SIZE_CHANGED;
+            res = DownloadResult::RESOURCE_SIZE_CHANGED;
         }
 
         ifs.close();
@@ -290,13 +403,21 @@ namespace DownloaderLib
     /// <param name="filePath"></param>
     /// <param name="fileMeta"></param>
     /// <returns></returns>
-    DownloadResult SingleClient::CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta)
+    DownloadResult SingleClient::CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta)
     {
         std::ofstream ofs(filePath, std::ios::binary | std::ios::out);
         if ((ofs.rdstate() & std::ifstream::failbit) != 0)
-            return CANNOT_CREATE_METAFILE;
-        ofs.seekp(fileMeta.totalSize - sizeof(SFileMetaData));
-        ofs.write((char *)&fileMeta, sizeof(fileMeta));
+            return DownloadResult::CANNOT_CREATE_METAFILE;
+        if (includeMeta)
+        {
+            ofs.seekp(fileMeta.totalSize - sizeof(SFileMetaData));
+            ofs.write((char*)&fileMeta, sizeof(fileMeta));
+        }
+        else
+        {
+            ofs.seekp(fileMeta.totalSize - 1);
+            ofs.write("", 1);
+        }
         ofs.close();
         return OK;
     }
@@ -398,11 +519,11 @@ namespace DownloaderLib
         }
     }
 
-    bool SingleClient::validateResource(const char *url)
+    DownloadResult SingleClient::validateResource(const char *url)
     {
         // Set the stuff up first!
         if (!m_isProperlyInitialized)
-            return false;
+            return DOWNLOADER_NOT_INITIALIZED;
 
         m_resourceStatus = new SingleClient::ResourceStatus();
         m_resourceStatus->URL = url;
@@ -419,6 +540,6 @@ namespace DownloaderLib
 
         auto res = curl_easy_perform(m_curl);
         PopulateResourceMetadata(res);
-        return m_resourceStatus->IsValidated;
+        return OK;
     }
 }
