@@ -5,7 +5,7 @@
 #ifdef WIN32 
 #define PathSeparator      '\\'
 #else
-#define PathSeparator      '/'
+#define PathSeparator      "/"
 #endif
 
 #define MaxDownloadThreads 5

@@ -352,22 +352,22 @@ namespace DownloaderLib
 
     std::string SingleClient::GetAcceptRangesValue()
     {
-        return GetAttribute("Accept-Ranges: ");
+        return GetAttribute("accept-ranges: ");
     }
 
     std::string SingleClient::GetETag()
     {
-        return GetAttribute("ETag: ");
+        return GetAttribute("etag: ");
     }
 
     std::string SingleClient::GetLastModified()
     {
-        return GetAttribute("Last-Modified: ");
+        return GetAttribute("last-modified: ");
     }
 
     std::string SingleClient::GetContentLength()
     {
-        return GetAttribute("Content-Length: ");
+        return GetAttribute("content-length: ");
     }
 
     void SingleClient::PopulateResourceMetadata(const CURLcode cc)

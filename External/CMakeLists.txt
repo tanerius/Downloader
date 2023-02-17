@@ -37,7 +37,7 @@ if(WIN32)
         add_subdirectory(curl)
     endif()
 else()
-    set(CURL_PATH "/usr/local/Cellar/curl/7.75.0")
+    set(CURL_PATH "/usr/local/Cellar/curl/7.88.0")
 
     find_library(
         LIB_CURL
