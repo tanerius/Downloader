@@ -210,10 +210,14 @@ namespace DownloaderLib
                 else
                     return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, funcCompleted, "Error performing the curl request");
 
-                if (funcCompleted != nullptr)
-                    funcCompleted(DownloadResult::OK, filepath);
+                
 
             }
+
+            if (funcCompleted != nullptr)
+                funcCompleted(DownloadResult::OK, filepath);
+
+            return DownloadResult::OK;
         }
         else
         {
@@ -302,6 +306,7 @@ namespace DownloaderLib
         const unsigned long long startingOffset,
         bool isEof)
     {
+        std::cout << "WRITING CHUNK ..." << std::endl;
         std::ofstream fs(filePath, std::ios::binary | std::ios::out | std::ios::in);
         if ((fs.rdstate() & std::ifstream::failbit) != 0)
             return DownloadResult::CANNOT_ACCESS_METAFILE;
