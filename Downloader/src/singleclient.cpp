@@ -161,7 +161,8 @@ namespace DownloaderLib
 
                         metaFileAlreadyOpened = true;
                     }
-                    return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");
+                    else
+                        return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");
                 }
 
                 if(!metaFileAlreadyOpened)
