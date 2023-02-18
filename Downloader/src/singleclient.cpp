@@ -65,11 +65,21 @@ namespace DownloaderLib
         curl_easy_reset(m_curl);
 
         if (funcCompleted != nullptr)
-            funcCompleted(result, msg);
+            funcCompleted((int)result, msg);
 
         if (m_resourceStatus != nullptr)
             delete m_resourceStatus;
         return result;
+    }
+
+    void SingleClient::ResetMemory(MemoryStruct& m)
+    {
+        if (m.memory != nullptr)
+        {
+            free(m.memory);
+            m.memory = nullptr;
+        }
+        m.size = 0;
     }
 
     DownloadResult SingleClient::download(
@@ -108,22 +118,23 @@ namespace DownloaderLib
             * RANGED DOWNLOAD
             * This is the case where the file is large and we should enable download resuming
             */
-
+            
             // Check if sparse file exists
             if (existsSparseFile)
             {
+                DLOG("Reading sparse file " << tmpSparseFile);
                 metaData.totalSize = m_resourceStatus->ContentLength;
                 auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
-                if (resMeta != OK)
+                if (resMeta != DownloadResult::OK)
                 {
                     return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");;
                 }
             }
             else
             {
+                DLOG("Creating sparse file " << tmpSparseFile);
                 metaData.totalSize = m_resourceStatus->ContentLength;
                 metaData.chunkSize = m_chunkSize;
-                metaData.hasChunkWritten = 0;
                 metaData.currentSavedOffset = 0;
                 metaData.totalChunks = metaData.totalSize / m_chunkSize;
                 if (metaData.totalSize % m_chunkSize != 0)
@@ -135,19 +146,21 @@ namespace DownloaderLib
                 // this is a fresh download
                 auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData, true);
 
-                if (resMeta != OK)
+                if (resMeta != DownloadResult::OK)
                     return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
             }
 
+            DLOG("Setting up cURL and starting download... " );
             // set url
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
             // forward all data to this func
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
+            struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
+            chunk.memory = nullptr;
 
             // at least once it should execute
             do
             {
-                struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
                 chunk.memory = (char*)malloc(1);    /* will be grown as needed by the realloc above */
                 chunk.size = 0;                     /* no data at this point */
 
@@ -166,7 +179,10 @@ namespace DownloaderLib
                     eof = true;
 
                 if (segmentEnd < segmentStart)
+                {
+                    ResetMemory(chunk);
                     return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, funcCompleted, "Error in calculating chunk size");
+                }
 
                 std::string chunkRange = std::to_string(segmentStart) + ((eof) ? "-" : "-" + std::to_string(segmentEnd));
 
@@ -196,21 +212,32 @@ namespace DownloaderLib
                     result = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
 
                     if (responseCode != 206) /* For ranged tramsfers response needs to be 206 */
+                    {
+                        ResetMemory(chunk);
                         return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, funcCompleted, "Response code is bad");
+                    }
 
                     /* If all is well chunk will have our data that we need to append */
 
                     // write to file
                     DownloadResult writeResult = WriteChunkData(tmpSparseFile.c_str(), chunk, metaData, eof);
                     if (writeResult != DownloadResult::OK)
+                    {
+                        ResetMemory(chunk);
                         return ProcessResultAndCleanup(writeResult, funcCompleted, "Was not able to write downloaded data");
+                    }
                 }
                 else
+                {
+                    ResetMemory(chunk);
                     return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, funcCompleted, "Error performing the curl request");
+                }
 
-                
+                ResetMemory(chunk);
 
             } while (static_cast<curl_off_t>(metaData.lastDownloadedChunk) < metaData.totalChunks);
+
+            DLOG("Finished download. Cleaning up... ");
 
             // check if destination file exists if so remove it
             std::remove(sFilePath.string().c_str());
@@ -236,7 +263,7 @@ namespace DownloaderLib
             
             auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData, false);
 
-            if (resMeta != OK)
+            if (resMeta != DownloadResult::OK)
                 return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
 
             // set url
@@ -302,7 +329,7 @@ namespace DownloaderLib
         }
 
         if (funcCompleted != nullptr)
-            funcCompleted(DownloadResult::OK, filepath);
+            funcCompleted((int)DownloadResult::OK, filepath);
 
         DLOG("Can accept ranges..." << m_resourceStatus->CanAcceptRanges);
         DLOG("ContentLength..." << m_resourceStatus->ContentLength);
@@ -340,14 +367,13 @@ namespace DownloaderLib
         }
 
         md.currentSavedOffset += downloadedData.size;
-        md.hasChunkWritten = 1;
         md.lastDownloadedChunk++;
 
         if (isEof)
         {
             // done writing here and dl completed
             fs.close();
-            return OK;
+            return DownloadResult::OK;
         }
         
         // write metadata to file and close file
@@ -422,7 +448,7 @@ namespace DownloaderLib
 
     DownloadResult SingleClient::ReadMetaFile(SFileMetaData &md, const char *filename)
     {
-        DownloadResult res = OK;
+        DownloadResult res = DownloadResult::OK;
         std::ifstream ifs(filename, std::ios::binary);
 
         if (!ifs)
@@ -467,7 +493,7 @@ namespace DownloaderLib
             ofs.write("", 1);
         }
         ofs.close();
-        return OK;
+        return DownloadResult::OK;
     }
 
     size_t SingleClient::CurlHeaderCallback(
@@ -571,7 +597,7 @@ namespace DownloaderLib
     {
         // Set the stuff up first!
         if (!m_isProperlyInitialized)
-            return DOWNLOADER_NOT_INITIALIZED;
+            return DownloadResult::DOWNLOADER_NOT_INITIALIZED;
 
         m_resourceStatus = new SingleClient::ResourceStatus();
         m_resourceStatus->URL = url;
@@ -589,6 +615,6 @@ namespace DownloaderLib
         auto res = curl_easy_perform(m_curl);
         PopulateResourceMetadata(res);
         curl_easy_reset(m_curl);
-        return OK;
+        return DownloadResult::OK;
     }
 }

@@ -27,8 +27,8 @@ namespace DownloaderLib
         SingleClient sc;
         std::string destFile = ".";
         destFile += PathSeparator;
-        destFile += "50MB.bin";
-        sc.download("https://home.tanerius.com/samples/files/50MB.bin", destFile.c_str(), [](int code, const char* msg) {
+        destFile += "1GB.bin";
+        sc.download("https://home.tanerius.com/samples/files/1GB.bin", destFile.c_str(), [](int code, const char* msg) {
             std::cout << "Download finished with code: " << code << " " << msg;
             }, nullptr);
     }

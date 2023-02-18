@@ -19,10 +19,9 @@ namespace DownloaderLib
         size_t lastDownloadedChunk = 0;
         size_t checkCode = 2308075;
         size_t currentSavedOffset = 0; /* Only used in ranged downloads */
-        short hasChunkWritten = 0;
     };
 
-    enum DownloadResult : int
+    enum class DownloadResult : int
     {
         OK = 0,
         COULD_NOT_VALIDATE,
@@ -106,6 +105,7 @@ namespace DownloaderLib
         std::string GetLastModified();
         std::string GetContentLength();
         void PopulateResourceMetadata(const CURLcode cc);
+        void ResetMemory(MemoryStruct& m);
 
         DownloadResult ReadMetaFile(SFileMetaData &md, const char *filename);
         DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
