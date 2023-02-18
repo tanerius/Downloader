@@ -24,36 +24,25 @@ namespace DownloaderLib
 
     void Downloader::TestDownload()
     {
-        SingleClient sc;
         std::string destFile = ".";
         destFile += PathSeparator;
-        destFile += "1GB.bin";
-        sc.download("https://home.tanerius.com/samples/files/1GB.bin", destFile.c_str(), [](int code, const char* msg) {
+        destFile += "1MB.bin";
+        //https://home.tanerius.com/samples/files/1MB.bin
+        //https://home.tanerius.com/samples/files/1GB.bin
+        download("https://home.tanerius.com/samples/files/1MB.bin", destFile.c_str(), [](int code, const char* msg) {
             std::cout << "Download finished with code: " << code << " " << msg;
             }, nullptr);
     }
 
-    int Downloader::download(const char *url, const char *filePath, void (*func)(int, const char *))
+    void Downloader::download(
+        const char* url,
+        const char* filepath,
+        void (*funcCompleted)(int, const char*),
+        int (*funcProgress)(void*, double, double, double, double) = nullptr
+    )
     {
-        // check thread count
-        bool canCreateThread = false;
-
-        m_threadMtx.lock();
-        if (m_threadCount < MaxDownloadThreads)
-        {
-            canCreateThread = true;
-            ++m_threadCount;
-        }
-        m_threadMtx.unlock();
-
-        if (canCreateThread)
-        {
-            // create new thread to execute the task
-            std::thread t = memberThread(url, filePath, func);
-            t.join();
-        }
-
-        return 0;
+        SingleClient sc;
+        auto ret = sc.download(url, filepath, funcCompleted, funcProgress);
     }
 
     void Downloader::safeDecrement()

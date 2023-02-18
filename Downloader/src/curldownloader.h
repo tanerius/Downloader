@@ -1,8 +1,5 @@
 #pragma once
 #include "common.h"
-#include <thread>
-#include <mutex>
-
 namespace DownloaderLib
 {
 
@@ -13,20 +10,19 @@ namespace DownloaderLib
         virtual ~Downloader();
 
         /**
-         Download a file from url.
+         Download a file from a url.
          @return: task ID. If failed, return -1
          */
-        int download(const char *url, const char *filePath, void (*func)(int, const char *));
-        void safeDecrement();
-        std::mutex m_threadMtx;
-        std::mutex m_callbackMtx;
+        void download(
+            const char* url,
+            const char* filepath,
+            void (*funcCompleted)(int, const char*),
+            int (*funcProgress)(void*, double, double, double, double) = nullptr
+        );
+
         void TestDownload();
 
     private:
-        std::thread memberThread(const char *url, const char *filePath, void (*func)(int, const char *));
         int stringSize(const char *str);
-
-    private:
-        int m_threadCount;
     };
 }
