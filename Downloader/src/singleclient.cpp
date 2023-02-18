@@ -6,6 +6,10 @@
 #include <regex>
 #include <algorithm>
 #include <cstdlib>
+#ifdef DEBUG
+#include <chrono>
+#endif // DEBUG
+
 
 namespace DownloaderLib
 {
@@ -90,6 +94,11 @@ namespace DownloaderLib
     {
         DLOG("Starting download of " << url << " to " << filepath);
 
+#ifdef DEBUG
+        auto start = std::chrono::high_resolution_clock::now();
+#endif // DEBUG
+
+        
         m_resourceStatus = nullptr;
 
         if (m_chunkSize <= sizeof(SFileMetaData))
@@ -338,6 +347,12 @@ namespace DownloaderLib
         DLOG("ResponseCode..." << m_resourceStatus->ResponseCode);
         DLOG("URL..." << m_resourceStatus->URL);
         DLOG("ChunkSize..." << m_chunkSize);
+
+#ifdef DEBUG
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+        DLOG("Duration: " << duration.count() << "ms");
+#endif // DEBUG
 
         return DownloadResult::OK;
     }
