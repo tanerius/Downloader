@@ -56,24 +56,7 @@ namespace DownloaderLib
 
         return tmp_s;
     }
-
-    void SingleClient::DebugPrintResourceMeta()
-    {
-        if (m_resourceStatus == nullptr)
-        {
-            std::cout << "Resource data null..." << std::endl;
-            return;
-        }
-
-        std::cout << "Can accept ranges..." << m_resourceStatus->CanAcceptRanges << std::endl;
-        std::cout << "ContentLength..." << m_resourceStatus->ContentLength << std::endl;
-        std::cout << "DownloadedSize..." << m_resourceStatus->DownloadedSize << std::endl;
-        std::cout << "IsValidated..." << m_resourceStatus->IsValidated << std::endl;
-        std::cout << "ResponseCode..." << m_resourceStatus->ResponseCode << std::endl;
-        std::cout << "URL..." << m_resourceStatus->URL << std::endl;
-        std::cout << "ChunkSize..." << m_chunkSize << std::endl;
-    }
-
+        
     DownloadResult SingleClient::ProcessResultAndCleanup(
         const DownloadResult result, 
         void (*funcCompleted)(int, const char*), 
@@ -95,6 +78,8 @@ namespace DownloaderLib
         void (*funcCompleted)(int, const char *),
         int (*funcProgress)(void *, double, double, double, double))
     {
+        DLOG("Starting download of " << url << " to " << filepath);
+
         m_resourceStatus = nullptr;
 
         if (m_chunkSize <= sizeof(SFileMetaData))
@@ -118,6 +103,7 @@ namespace DownloaderLib
 
         if (doRangedDownload)
         {
+            DLOG("Starting ranged download...");
             /*
             * RANGED DOWNLOAD
             * This is the case where the file is large and we should enable download resuming
@@ -184,10 +170,9 @@ namespace DownloaderLib
 
                 std::string chunkRange = std::to_string(segmentStart) + ((eof) ? "-" : "-" + std::to_string(segmentEnd));
 
-                std::cout << "Requesting range: " << chunkRange << std::endl;
+                DLOG("Requesting range : " << chunkRange);
 
                 curl_easy_setopt(m_curl, CURLOPT_RANGE, chunkRange.c_str());
-
 
                 if (funcProgress != nullptr)
                 {
@@ -244,6 +229,7 @@ namespace DownloaderLib
             * REGULAR DOWNLOAD
             * This is the case where the file is too small to do a ranged download so do a regular one
             */
+            DLOG("Starting non-ranged download...");
 
             if (existsSparseFile)
                 std::remove(tmpSparseFile.c_str());
@@ -318,7 +304,13 @@ namespace DownloaderLib
         if (funcCompleted != nullptr)
             funcCompleted(DownloadResult::OK, filepath);
 
-        DebugPrintResourceMeta();
+        DLOG("Can accept ranges..." << m_resourceStatus->CanAcceptRanges);
+        DLOG("ContentLength..." << m_resourceStatus->ContentLength);
+        DLOG("DownloadedSize..." << m_resourceStatus->DownloadedSize);
+        DLOG("IsValidated..." << m_resourceStatus->IsValidated);
+        DLOG("ResponseCode..." << m_resourceStatus->ResponseCode);
+        DLOG("URL..." << m_resourceStatus->URL);
+        DLOG("ChunkSize..." << m_chunkSize);
 
         return DownloadResult::OK;
     }
@@ -334,7 +326,8 @@ namespace DownloaderLib
         if ((fs.rdstate() & std::ifstream::failbit) != 0)
             return DownloadResult::CANNOT_ACCESS_METAFILE;
 
-        std::cout << md.lastDownloadedChunk << "/" << md.totalChunks << " *** Current offset: " << md.currentSavedOffset << " * actual size: " << downloadedData.size << " * chunk size: " << md.chunkSize << std::endl;
+
+        DLOG(md.lastDownloadedChunk << "/" << md.totalChunks << ": CurrentOffset: " << md.currentSavedOffset << " / ActualSize: " << downloadedData.size << " / ChunkSize: " << md.chunkSize);
 
         // first write the data
         fs.seekp(md.currentSavedOffset);
@@ -420,7 +413,7 @@ namespace DownloaderLib
 
 #ifdef DEBUG_MODE
         // Switch on full protocol/debug output while testing
-        //curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
 
         // disable progress meter, set to 0L to enable and disable debug output
         // curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 1L);
@@ -483,7 +476,6 @@ namespace DownloaderLib
         size_t nitems,
         SingleClient::ResourceStatus *h)
     {
-        std::cout << "CurlHeaderCallback..." << std::endl;
         std::string temp = std::string(buffer, nitems);
 
         if (temp.size() > 3)

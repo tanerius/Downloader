@@ -106,7 +106,7 @@ namespace DownloaderLib
         std::string GetLastModified();
         std::string GetContentLength();
         void PopulateResourceMetadata(const CURLcode cc);
-        void DebugPrintResourceMeta();
+
         DownloadResult ReadMetaFile(SFileMetaData &md, const char *filename);
         DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
         DownloadResult WriteChunkData(

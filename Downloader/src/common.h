@@ -1,6 +1,4 @@
 #pragma once
-#include <thread>
-#include <mutex>
 
 #ifdef WIN32 
 #define PathSeparator      '\\'
@@ -10,4 +8,11 @@
 
 #define MaxDownloadThreads 5
 
-#define DEBUG_MODE
+
+#define DEBUG
+
+#ifdef DEBUG 
+#define DLOG(x) (std::cout << x << std::endl)
+#else 
+#define DLOG(x)
+#endif
