@@ -136,6 +136,7 @@ namespace DownloaderLib
                 metaData.totalSize = m_resourceStatus->ContentLength;
                 metaData.chunkSize = m_chunkSize;
                 metaData.hasChunkWritten = 0;
+                metaData.currentSavedOffset = 0;
                 metaData.totalChunks = metaData.totalSize / m_chunkSize;
                 if (metaData.totalSize % m_chunkSize != 0)
                     metaData.totalChunks++;
@@ -150,38 +151,40 @@ namespace DownloaderLib
                     return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
             }
 
-            while (static_cast<curl_off_t>(metaData.lastDownloadedChunk) < metaData.totalChunks)
-            {
-                size_t nextChunk = metaData.lastDownloadedChunk + 1;
-                // set url
-                curl_easy_setopt(m_curl, CURLOPT_URL, url);
+            // set url
+            curl_easy_setopt(m_curl, CURLOPT_URL, url);
+            // forward all data to this func
+            curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
 
-                // forward all data to this func
-                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToFile);
+            // at least once it should execute
+            do
+            {
+                
+                struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
+                chunk.memory = (char*)malloc(1);    /* will be grown as needed by the realloc above */
+                chunk.size = 0;                     /* no data at this point */
 
                 bool eof = false;
-                char* downloadedData = nullptr;
 
-                unsigned long long segmentStart = (nextChunk - 1) * metaData.chunkSize;
+                unsigned long long segmentStart = metaData.currentSavedOffset;
                 unsigned long long segmentEnd = segmentStart + metaData.chunkSize - 1;
 
                 if (segmentEnd > static_cast<unsigned long long>(metaData.totalSize))
                 {
-                    segmentEnd = metaData.totalSize;
+                    segmentEnd = metaData.totalSize - 1;
                     eof = true;
                 }
-
-                unsigned long long chunkSize = segmentEnd - segmentStart + 1;
 
                 if (segmentEnd < segmentStart)
                     return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, funcCompleted, "Error in calculating chunk size");
 
-                std::string chunkRange = segmentStart + "-" + segmentEnd;
+                std::string chunkRange = (segmentStart + 1) + ((eof) ? "-" : "-" + segmentEnd);
+
 
                 curl_easy_setopt(m_curl, CURLOPT_RANGE, chunkRange.c_str());
 
                 // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
-                curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, downloadedData);
+                curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, (void*)&chunk);
 
                 if (funcProgress != nullptr)
                 {
@@ -194,17 +197,19 @@ namespace DownloaderLib
                 // do it
                 CURLcode result = curl_easy_perform(m_curl);
 
-                if (result == CURLE_OK) // only assume 200 is correct
+                if (result == CURLE_OK) /* This means curl completed ok */
                 {
                     // get HTTP response code
                     int responseCode;
                     result = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
 
-                    if (responseCode < 200 || responseCode >= 300)
+                    if (responseCode != 206) /* For ranged tramsfers response needs to be 206 */
                         return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, funcCompleted, "Response code is bad");
 
+                    /* If all is well chunk will have our data that we need to append */
+
                     // write to file
-                    DownloadResult writeResult = WriteChunkData(tmpSparseFile.c_str(), downloadedData, chunkSize, metaData, segmentStart, eof);
+                    DownloadResult writeResult = WriteChunkData(tmpSparseFile.c_str(), chunk, metaData, eof);
                     if (writeResult != DownloadResult::OK)
                         return ProcessResultAndCleanup(writeResult, funcCompleted, "Was not able to write downloaded data");
                 }
@@ -213,7 +218,7 @@ namespace DownloaderLib
 
                 
 
-            }
+            } while (static_cast<curl_off_t>(metaData.lastDownloadedChunk) < metaData.totalChunks);
 
             // check if destination file exists if so remove it
             std::remove(sFilePath.string().c_str());
@@ -311,26 +316,28 @@ namespace DownloaderLib
 
     DownloadResult SingleClient::WriteChunkData(
         const char* filePath,
-        const char* downloadedData,
-        const unsigned long long chunkSize,
+        const MemoryStruct& downloadedData,
         SFileMetaData& md,
-        const unsigned long long startingOffset,
         bool isEof)
     {
-        std::cout << "WRITING CHUNK ..." << std::endl;
+
         std::ofstream fs(filePath, std::ios::binary | std::ios::out | std::ios::in);
         if ((fs.rdstate() & std::ifstream::failbit) != 0)
             return DownloadResult::CANNOT_ACCESS_METAFILE;
 
         // first write the data
-        fs.seekp(startingOffset);
-        fs.write(downloadedData, chunkSize);
+        fs.seekp(md.currentSavedOffset);
+        fs.write(downloadedData.memory, downloadedData.size);
         
         if (!fs.good())
         {
             fs.close();
             return DownloadResult::CANNOT_WRITE_DOWNLOADED_DATA;
         }
+
+        md.currentSavedOffset += downloadedData.size;
+        md.hasChunkWritten = 1;
+        md.lastDownloadedChunk++;
 
         if (isEof)
         {

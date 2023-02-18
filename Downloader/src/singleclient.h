@@ -18,6 +18,7 @@ namespace DownloaderLib
         size_t chunkSize = 0;
         size_t lastDownloadedChunk = 0;
         size_t checkCode = 2308075;
+        size_t currentSavedOffset = 0; /* Only used in ranged downloads */
         short hasChunkWritten = 0;
     };
 
@@ -110,10 +111,8 @@ namespace DownloaderLib
         DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
         DownloadResult WriteChunkData(
             const char* filePath,
-            const char* downloadedData,
-            const unsigned long long chunkSize,
+            const MemoryStruct& downloadedData,
             SFileMetaData& md,
-            const unsigned long long startingOffset,
             bool isEof);
 
     private:
