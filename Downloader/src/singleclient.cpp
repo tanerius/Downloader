@@ -149,7 +149,7 @@ namespace DownloaderLib
                     return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
             }
 
-            while (metaData.lastDownloadedChunk < metaData.totalChunks)
+            while (static_cast<curl_off_t>(metaData.lastDownloadedChunk) < metaData.totalChunks)
             {
                 size_t nextChunk = metaData.lastDownloadedChunk + 1;
                 // set url
@@ -214,10 +214,15 @@ namespace DownloaderLib
 
             }
 
-            if (funcCompleted != nullptr)
-                funcCompleted(DownloadResult::OK, filepath);
+            // check if destination file exists if so remove it
+            std::remove(sFilePath.string().c_str());
 
-            return DownloadResult::OK;
+            // rename it to real filename which does a move of the file so no need for explicit deletion
+            int ret = std::rename(tmpSparseFile.c_str(), sFilePath.string().c_str());
+
+            if (ret > 0)
+                return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, funcCompleted, "Cannot rename the temp file");
+
         }
         else
         {
@@ -284,14 +289,19 @@ namespace DownloaderLib
 
                     // rename it to real filename which does a move of the file so no need for explicit deletion
                     ret = std::rename(tmpSparseFile.c_str(), sFilePath.string().c_str());
+
+                    if(ret > 0)
+                        return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, funcCompleted, "Cannot rename the temp file");
                 }
                 else
                     return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, funcCompleted, "Error performing the curl request");
 
-                if (funcCompleted != nullptr)
-                    funcCompleted(DownloadResult::OK, filepath);
+                
             }
         }
+
+        if (funcCompleted != nullptr)
+            funcCompleted(DownloadResult::OK, filepath);
 
         DebugPrintResourceMeta();
 
