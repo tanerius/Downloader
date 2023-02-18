@@ -166,7 +166,6 @@ namespace DownloaderLib
                 chunk.size = 0;                     /* no data at this point */
 
                 bool eof = false;
-
                 unsigned long long segmentStart = metaData.currentSavedOffset;
                 unsigned long long segmentEnd = segmentStart + metaData.chunkSize - 1;
 
@@ -176,13 +175,17 @@ namespace DownloaderLib
                     eof = true;
                 }
 
+                /* Check if there is space left to write meta info. If not get the rest of the file even bigger than chunk */
+                if ((metaData.totalSize - segmentEnd) < (sizeof(SFileMetaData) + 1))
+                    eof = true;
+
                 if (segmentEnd < segmentStart)
                     return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, funcCompleted, "Error in calculating chunk size");
 
-                if (segmentStart > 0)
-                    segmentStart = segmentStart + 1; /* Because we already have data */
-
                 std::string chunkRange = std::to_string(segmentStart) + ((eof) ? "-" : "-" + std::to_string(segmentEnd));
+
+                std::cout << "Requesting range: " << chunkRange << std::endl;
+
                 curl_easy_setopt(m_curl, CURLOPT_RANGE, chunkRange.c_str());
 
 
@@ -331,6 +334,8 @@ namespace DownloaderLib
         if ((fs.rdstate() & std::ifstream::failbit) != 0)
             return DownloadResult::CANNOT_ACCESS_METAFILE;
 
+        std::cout << md.lastDownloadedChunk << "/" << md.totalChunks << " *** Current offset: " << md.currentSavedOffset << " * actual size: " << downloadedData.size << " * chunk size: " << md.chunkSize << std::endl;
+
         // first write the data
         fs.seekp(md.currentSavedOffset);
         fs.write(downloadedData.memory, downloadedData.size);
@@ -365,17 +370,15 @@ namespace DownloaderLib
 
     size_t SingleClient::WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
     {
-        std::cout << "Writing to file..." << std::endl;
         return fwrite(ptr, size, nmemb, stream);
     }
 
     size_t SingleClient::WriteToMemory(char* receivedContent, size_t size, size_t nmemb, void* userdata)
     {
-        printf("Writing to memory...\n");
         size_t realsize = size * nmemb;
         struct MemoryStruct* mem = (struct MemoryStruct*)userdata;
 
-        char* ptr = (char*)realloc(mem->memory, mem->size + realsize);
+        char* ptr = (char*)realloc(mem->memory, mem->size + realsize + 1);
         if (!ptr) {
             /* out of memory! */
             printf("not enough memory (realloc returned NULL)\n");
@@ -385,15 +388,13 @@ namespace DownloaderLib
         mem->memory = ptr;
         memcpy(&(mem->memory[mem->size]), receivedContent, realsize);
         mem->size += realsize;
-        // When Text we should teminate with 0 but in this casewe dont need since we are binary
-        // mem->memory[mem->size] = 0;
+        mem->memory[mem->size] = 0;
 
         return realsize;
     }
 
     size_t SingleClient::WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp)
     {
-        std::cout << "Writing to string..." << std::endl;
         char* data = (char*)ptr;
         size_t len = size * nmemb;
         sp.insert(sp.end(), data, data + len);
@@ -419,7 +420,7 @@ namespace DownloaderLib
 
 #ifdef DEBUG_MODE
         // Switch on full protocol/debug output while testing
-        curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
+        //curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
 
         // disable progress meter, set to 0L to enable and disable debug output
         // curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 1L);
