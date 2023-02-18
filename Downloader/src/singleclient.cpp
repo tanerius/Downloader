@@ -153,13 +153,10 @@ namespace DownloaderLib
 
             // set url
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
-            // forward all data to this func
-            curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
 
             // at least once it should execute
             do
             {
-                
                 struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
                 chunk.memory = (char*)malloc(1);    /* will be grown as needed by the realloc above */
                 chunk.size = 0;                     /* no data at this point */
@@ -178,13 +175,12 @@ namespace DownloaderLib
                 if (segmentEnd < segmentStart)
                     return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, funcCompleted, "Error in calculating chunk size");
 
-                std::string chunkRange = (segmentStart + 1) + ((eof) ? "-" : "-" + segmentEnd);
+                if (segmentStart > 0)
+                    segmentStart = segmentStart + 1; /* Because we already have data */
 
-
+                std::string chunkRange = std::to_string(segmentStart) + ((eof) ? "-" : "-" + std::to_string(segmentEnd));
                 curl_easy_setopt(m_curl, CURLOPT_RANGE, chunkRange.c_str());
 
-                // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
-                curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, (void*)&chunk);
 
                 if (funcProgress != nullptr)
                 {
@@ -193,6 +189,11 @@ namespace DownloaderLib
                     // Install the callback function (returning non ze`ro from this will stop curl
                     curl_easy_setopt(m_curl, CURLOPT_PROGRESSFUNCTION, funcProgress);
                 }
+
+                // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
+                curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, (void*)&chunk);
+                // forward all data to this func
+                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
 
                 // do it
                 CURLcode result = curl_easy_perform(m_curl);
@@ -359,11 +360,13 @@ namespace DownloaderLib
 
     size_t SingleClient::WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
     {
+        std::cout << "Writing to file..." << std::endl;
         return fwrite(ptr, size, nmemb, stream);
     }
 
-    size_t SingleClient::WriteToMemory(void* receivedContent, size_t size, size_t nmemb, void* userdata)
+    size_t SingleClient::WriteToMemory(char* receivedContent, size_t size, size_t nmemb, void* userdata)
     {
+        std::cout << "Writing to memory..." << std::endl;
         size_t realsize = size * nmemb;
         struct MemoryStruct* mem = (struct MemoryStruct*)userdata;
 
@@ -385,6 +388,7 @@ namespace DownloaderLib
 
     size_t SingleClient::WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp)
     {
+        std::cout << "Writing to string..." << std::endl;
         char* data = (char*)ptr;
         size_t len = size * nmemb;
         sp.insert(sp.end(), data, data + len);

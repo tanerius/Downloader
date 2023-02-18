@@ -83,7 +83,7 @@ namespace DownloaderLib
 
         static size_t WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
         static size_t WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp);
-        static size_t WriteToMemory(void* ptr, size_t size, size_t nmemb, void* userdata);
+        static size_t WriteToMemory(char* ptr, size_t size, size_t nmemb, void* userdata);
         
         std::string genRandomString(const int len);
 
