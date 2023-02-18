@@ -119,6 +119,7 @@ namespace DownloaderLib
 
         std::string tmpSparseFile = sFilePath.parent_path().string() + PathSeparator + sFilePath.filename().stem().string() + ".tmp";
         bool existsSparseFile = std::filesystem::exists(tmpSparseFile);
+        std::ofstream sparseFileStream;
 
         if (doRangedDownload)
         {
@@ -127,7 +128,7 @@ namespace DownloaderLib
             * RANGED DOWNLOAD
             * This is the case where the file is large and we should enable download resuming
             */
-            
+                       
             // Check if sparse file exists
             if (existsSparseFile)
             {
@@ -136,8 +137,9 @@ namespace DownloaderLib
                 auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
                 if (resMeta != DownloadResult::OK)
                 {
-                    return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");;
+                    return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");
                 }
+                sparseFileStream.open(tmpSparseFile.c_str(), std::ios::binary | std::ios::out);
             }
             else
             {
@@ -153,11 +155,14 @@ namespace DownloaderLib
                     return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, funcCompleted, "Resource has zero size");
 
                 // this is a fresh download
-                auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData, true);
+                auto resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, true);
 
                 if (resMeta != DownloadResult::OK)
                     return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
             }
+
+            if ((sparseFileStream.rdstate() & std::ifstream::failbit) != 0)
+                return ProcessResultAndCleanup(DownloadResult::CANNOT_OPEN_METAFILE, funcCompleted, "Error opening resource meta information");
 
             DLOG("Setting up cURL and starting download... " );
             // set url
@@ -189,6 +194,7 @@ namespace DownloaderLib
 
                 if (segmentEnd < segmentStart)
                 {
+                    sparseFileStream.close();
                     ResetMemory(chunk);
                     return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, funcCompleted, "Error in calculating chunk size");
                 }
@@ -222,6 +228,7 @@ namespace DownloaderLib
 
                     if (responseCode != 206) /* For ranged tramsfers response needs to be 206 */
                     {
+                        sparseFileStream.close();
                         ResetMemory(chunk);
                         return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, funcCompleted, "Response code is bad");
                     }
@@ -229,15 +236,17 @@ namespace DownloaderLib
                     /* If all is well chunk will have our data that we need to append */
 
                     // write to file
-                    DownloadResult writeResult = WriteChunkData(tmpSparseFile.c_str(), chunk, metaData, eof);
+                    DownloadResult writeResult = WriteChunkData(sparseFileStream, chunk, metaData, eof);
                     if (writeResult != DownloadResult::OK)
                     {
+                        sparseFileStream.close();
                         ResetMemory(chunk);
                         return ProcessResultAndCleanup(writeResult, funcCompleted, "Was not able to write downloaded data");
                     }
                 }
                 else
                 {
+                    sparseFileStream.close();
                     ResetMemory(chunk);
                     return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, funcCompleted, "Error performing the curl request");
                 }
@@ -245,6 +254,8 @@ namespace DownloaderLib
                 ResetMemory(chunk);
 
             } while (static_cast<curl_off_t>(metaData.lastDownloadedChunk) < metaData.totalChunks);
+            
+            sparseFileStream.close();
 
             DLOG("Finished download. Cleaning up... ");
 
@@ -270,8 +281,8 @@ namespace DownloaderLib
             if (existsSparseFile)
                 std::remove(tmpSparseFile.c_str());
             
-            auto resMeta = CreateSparseFile(tmpSparseFile.c_str(), metaData, false);
-
+            auto resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, false);
+            sparseFileStream.close();
             if (resMeta != DownloadResult::OK)
                 return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
 
@@ -358,17 +369,11 @@ namespace DownloaderLib
     }
 
     DownloadResult SingleClient::WriteChunkData(
-        const char* filePath,
+        std::ofstream& fs,
         const MemoryStruct& downloadedData,
         SFileMetaData& md,
         bool isEof)
     {
-
-        std::ofstream fs(filePath, std::ios::binary | std::ios::out | std::ios::in);
-        if ((fs.rdstate() & std::ifstream::failbit) != 0)
-            return DownloadResult::CANNOT_ACCESS_METAFILE;
-
-
         DLOG(md.lastDownloadedChunk << "/" << md.totalChunks << ": CurrentOffset: " << md.currentSavedOffset << " / ActualSize: " << downloadedData.size << " / ChunkSize: " << md.chunkSize);
 
         // first write the data
@@ -377,7 +382,6 @@ namespace DownloaderLib
         
         if (!fs.good())
         {
-            fs.close();
             return DownloadResult::CANNOT_WRITE_DOWNLOADED_DATA;
         }
 
@@ -386,15 +390,12 @@ namespace DownloaderLib
 
         if (isEof)
         {
-            // done writing here and dl completed
-            fs.close();
             return DownloadResult::OK;
         }
         
         // write metadata to file and close file
         fs.seekp(md.totalSize - sizeof(SFileMetaData));
         fs.write((char*)&md, sizeof(md));
-        fs.close();
 
         if (!fs.good())
             return DownloadResult::CANNOT_WRITE_META_DATA;
@@ -492,9 +493,9 @@ namespace DownloaderLib
     /// <param name="filePath"></param>
     /// <param name="fileMeta"></param>
     /// <returns></returns>
-    DownloadResult SingleClient::CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta)
+    DownloadResult SingleClient::CreateSparseFile(std::ofstream& ofs, const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta)
     {
-        std::ofstream ofs(filePath, std::ios::binary | std::ios::out);
+        ofs.open(filePath, std::ios::binary | std::ios::out);
         if ((ofs.rdstate() & std::ifstream::failbit) != 0)
             return DownloadResult::CANNOT_CREATE_METAFILE;
         if (includeMeta)
@@ -507,7 +508,6 @@ namespace DownloaderLib
             ofs.seekp(fileMeta.totalSize - 1);
             ofs.write("", 1);
         }
-        ofs.close();
         return DownloadResult::OK;
     }
 

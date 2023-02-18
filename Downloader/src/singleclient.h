@@ -29,6 +29,7 @@ namespace DownloaderLib
         CORRUPT_METAFILE,
         RESOURCE_SIZE_CHANGED,
         CANNOT_CREATE_METAFILE,
+        CANNOT_OPEN_METAFILE,
         CHUNK_SIZE_TOO_SMALL,
         RESOURCE_HAS_ZERO_SIZE,
         DOWNLOADER_NOT_INITIALIZED,
@@ -108,9 +109,9 @@ namespace DownloaderLib
         void ResetMemory(MemoryStruct& m);
 
         DownloadResult ReadMetaFile(SFileMetaData &md, const char *filename);
-        DownloadResult CreateSparseFile(const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
+        DownloadResult CreateSparseFile(std::ofstream& ofs, const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
         DownloadResult WriteChunkData(
-            const char* filePath,
+            std::ofstream& fs,
             const MemoryStruct& downloadedData,
             SFileMetaData& md,
             bool isEof);
