@@ -79,6 +79,8 @@ namespace DownloaderLib
         void (*funcCompleted)(int, const char*), 
         const char* msg)
     {
+        curl_easy_reset(m_curl);
+
         if (funcCompleted != nullptr)
             funcCompleted(result, msg);
 
@@ -153,6 +155,8 @@ namespace DownloaderLib
 
             // set url
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
+            // forward all data to this func
+            curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
 
             // at least once it should execute
             do
@@ -192,8 +196,7 @@ namespace DownloaderLib
 
                 // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
                 curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, (void*)&chunk);
-                // forward all data to this func
-                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
+                
 
                 // do it
                 CURLcode result = curl_easy_perform(m_curl);
@@ -230,6 +233,7 @@ namespace DownloaderLib
             if (ret > 0)
                 return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, funcCompleted, "Cannot rename the temp file");
 
+            curl_easy_reset(m_curl);
         }
         else
         {
@@ -305,6 +309,7 @@ namespace DownloaderLib
 
                 
             }
+            curl_easy_reset(m_curl);
         }
 
         if (funcCompleted != nullptr)
@@ -366,7 +371,7 @@ namespace DownloaderLib
 
     size_t SingleClient::WriteToMemory(char* receivedContent, size_t size, size_t nmemb, void* userdata)
     {
-        std::cout << "Writing to memory..." << std::endl;
+        printf("Writing to memory...\n");
         size_t realsize = size * nmemb;
         struct MemoryStruct* mem = (struct MemoryStruct*)userdata;
 
@@ -414,7 +419,7 @@ namespace DownloaderLib
 
 #ifdef DEBUG_MODE
         // Switch on full protocol/debug output while testing
-        // curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
 
         // disable progress meter, set to 0L to enable and disable debug output
         // curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 1L);
@@ -477,6 +482,7 @@ namespace DownloaderLib
         size_t nitems,
         SingleClient::ResourceStatus *h)
     {
+        std::cout << "CurlHeaderCallback..." << std::endl;
         std::string temp = std::string(buffer, nitems);
 
         if (temp.size() > 3)
@@ -589,6 +595,7 @@ namespace DownloaderLib
 
         auto res = curl_easy_perform(m_curl);
         PopulateResourceMetadata(res);
+        curl_easy_reset(m_curl);
         return OK;
     }
 }
