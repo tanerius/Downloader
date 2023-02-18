@@ -16,6 +16,7 @@ namespace DownloaderLib
         void download(
             const char* url,
             const char* filepath,
+            DownloaderLib::Configutation config,
             void (*funcCompleted)(int, const char*),
             int (*funcProgress)(void*, double, double, double, double) = nullptr,
             const unsigned long chunkSizeInBytes = 4194304, /* 4MB */

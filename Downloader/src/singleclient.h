@@ -65,6 +65,9 @@ namespace DownloaderLib
         void SetUserAgent(const char* ua);
         unsigned long GetChunkSize() const { return static_cast<unsigned long>(m_chunkSize); }
         void GetUserAgent(char* useragent, unsigned int& size);
+        void SetConfiguration(DownloaderLib::Configutation c) { m_conf = c; }
+        DownloaderLib::Configutation GetConfiguration() { return m_conf; }
+
         /**
          Download url and rename it to satisfy filepath
          */
@@ -72,7 +75,8 @@ namespace DownloaderLib
             const char *url,
             const char *filepath,
             void (*funcCompleted)(int, const char *),
-            int (*funcProgress)(void *, double, double, double, double) = nullptr);
+            int (*funcProgress)(void *, double, double, double, double) = nullptr
+            );
 
     private:
         enum FileMetaStatus
@@ -121,5 +125,6 @@ namespace DownloaderLib
         bool m_isProperlyInitialized = false;
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
         std::string m_userAgent;
+        DownloaderLib::Configutation m_conf;
     };
 }
