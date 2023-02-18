@@ -6,6 +6,11 @@
 
 namespace DownloaderLib
 {
+    struct MemoryStruct {
+        char* memory;
+        size_t size;
+
+    };
     struct SFileMetaData
     {
         curl_off_t totalSize = 0;
@@ -75,8 +80,10 @@ namespace DownloaderLib
             S_ERROR
         };
 
-        static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
-        static size_t writeToString(char *ptr, size_t size, size_t nmemb, std::string &sp);
+        static size_t WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
+        static size_t WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp);
+        static size_t WriteToMemory(void* ptr, size_t size, size_t nmemb, void* userdata);
+        
         std::string genRandomString(const int len);
 
         DownloadResult validateResource(const char *url);

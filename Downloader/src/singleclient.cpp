@@ -5,6 +5,7 @@
 #include <fstream>
 #include <regex>
 #include <algorithm>
+#include <cstdlib>
 
 namespace DownloaderLib
 {
@@ -156,7 +157,7 @@ namespace DownloaderLib
                 curl_easy_setopt(m_curl, CURLOPT_URL, url);
 
                 // forward all data to this func
-                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
+                curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToFile);
 
                 bool eof = false;
                 char* downloadedData = nullptr;
@@ -243,7 +244,7 @@ namespace DownloaderLib
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
 
             // forward all data to this func
-            curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::writeToFile);
+            curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToFile);
 
             // open the file
             FILE* file = nullptr;
@@ -349,15 +350,37 @@ namespace DownloaderLib
         return DownloadResult::OK;
     }
 
-    size_t SingleClient::writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
+    size_t SingleClient::WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
     {
         return fwrite(ptr, size, nmemb, stream);
     }
 
-    size_t SingleClient::writeToString(char *ptr, size_t size, size_t nmemb, std::string &sp)
+    size_t SingleClient::WriteToMemory(void* receivedContent, size_t size, size_t nmemb, void* userdata)
     {
+        size_t realsize = size * nmemb;
+        struct MemoryStruct* mem = (struct MemoryStruct*)userdata;
+
+        char* ptr = (char*)realloc(mem->memory, mem->size + realsize);
+        if (!ptr) {
+            /* out of memory! */
+            printf("not enough memory (realloc returned NULL)\n");
+            return 0;
+        }
+
+        mem->memory = ptr;
+        memcpy(&(mem->memory[mem->size]), receivedContent, realsize);
+        mem->size += realsize;
+        // When Text we should teminate with 0 but in this casewe dont need since we are binary
+        // mem->memory[mem->size] = 0;
+
+        return realsize;
+    }
+
+    size_t SingleClient::WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp)
+    {
+        char* data = (char*)ptr;
         size_t len = size * nmemb;
-        sp.insert(sp.end(), ptr, ptr + len);
+        sp.insert(sp.end(), data, data + len);
         return len;
     }
 
