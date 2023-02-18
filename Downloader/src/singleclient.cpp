@@ -122,6 +122,14 @@ namespace DownloaderLib
         metaData.totalChunks = 0;
         metaData.chunkSize = m_chunkSize;
 
+        if (std::filesystem::exists(sFilePath.string()))
+        {
+            if(m_conf.OverwriteIfDestinationExists)
+                std::remove(sFilePath.string().c_str());
+            else
+                return ProcessResultAndCleanup(DownloadResult::DESTINATION_FILE_EXISTS, funcCompleted, "Destination file already exists");
+        }
+
         // Check if requested resource is of good size
         bool doRangedDownload = (static_cast<curl_off_t>(m_chunkSize) < m_resourceStatus->ContentLength) && m_resourceStatus->CanAcceptRanges;
 

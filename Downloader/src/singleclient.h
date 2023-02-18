@@ -40,6 +40,7 @@ namespace DownloaderLib
         CANNOT_WRITE_DOWNLOADED_DATA,
         CANNOT_WRITE_META_DATA,
         CANNOT_RENAME_TEMP_FILE,
+        DESTINATION_FILE_EXISTS,
     };
 
     /**
