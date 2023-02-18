@@ -85,6 +85,15 @@ namespace DownloaderLib
         m.size = 0;
     }
 
+    void SingleClient::SetMetaDataDefaults(SFileMetaData& metaData)
+    {
+        metaData.chunkSize = m_chunkSize;
+        metaData.currentSavedOffset = 0;
+        metaData.totalChunks = metaData.totalSize / m_chunkSize;
+        if (metaData.totalSize % m_chunkSize != 0)
+            metaData.totalChunks++;
+    }
+
     DownloadResult SingleClient::download(
         const char *url,
         const char *filepath,
@@ -134,21 +143,35 @@ namespace DownloaderLib
                 DLOG("Reading sparse file " << tmpSparseFile);
                 metaData.totalSize = m_resourceStatus->ContentLength;
                 auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
+                bool metaFileAlreadyOpened = false;
                 if (resMeta != DownloadResult::OK)
                 {
+                    if (resMeta == DownloadResult::CORRUPT_METAFILE && m_conf.RestartDownloadIfMetaInfoCorrupt)
+                    {
+                        SetMetaDataDefaults(metaData);
+                        if (metaData.totalChunks == 0)
+                            return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, funcCompleted, "Resource has zero size");
+
+                        // Metadata corrupt but config says silently discard and recreate
+                        std::remove(tmpSparseFile.c_str());
+                        resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, true);
+
+                        if (resMeta != DownloadResult::OK)
+                            return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
+
+                        metaFileAlreadyOpened = true;
+                    }
                     return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");
                 }
-                sparseFileStream.open(tmpSparseFile.c_str(), std::ios::binary | std::ios::out);
+
+                if(!metaFileAlreadyOpened)
+                    sparseFileStream.open(tmpSparseFile.c_str(), std::ios::binary | std::ios::out);
             }
             else
             {
                 DLOG("Creating sparse file " << tmpSparseFile);
                 metaData.totalSize = m_resourceStatus->ContentLength;
-                metaData.chunkSize = m_chunkSize;
-                metaData.currentSavedOffset = 0;
-                metaData.totalChunks = metaData.totalSize / m_chunkSize;
-                if (metaData.totalSize % m_chunkSize != 0)
-                    metaData.totalChunks++;
+                SetMetaDataDefaults(metaData);
 
                 if (metaData.totalChunks == 0)
                     return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, funcCompleted, "Resource has zero size");

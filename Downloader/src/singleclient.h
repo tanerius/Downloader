@@ -118,6 +118,8 @@ namespace DownloaderLib
             SFileMetaData& md,
             bool isEof);
 
+        void SetMetaDataDefaults(SFileMetaData& md);
+
     private:
         CURL *m_curl;
         // curl_off_t m_lastruntime;
