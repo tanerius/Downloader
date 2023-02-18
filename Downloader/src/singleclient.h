@@ -54,7 +54,6 @@ namespace DownloaderLib
             long ResponseCode = 0;
             bool CanAcceptRanges = false;
             curl_off_t ContentLength = -1;
-            curl_off_t DownloadedSize = -1;
             std::string URL;
             std::vector<std::string> Headers;
         };
@@ -63,7 +62,9 @@ namespace DownloaderLib
         SingleClient(size_t chunkSize, const char *agent);
         virtual ~SingleClient();
         void SetChunkSize(size_t s);
-
+        void SetUserAgent(const char* ua);
+        unsigned long GetChunkSize() const { return static_cast<unsigned long>(m_chunkSize); }
+        void GetUserAgent(char* useragent, unsigned int& size);
         /**
          Download url and rename it to satisfy filepath
          */
@@ -84,17 +85,13 @@ namespace DownloaderLib
         static size_t WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
         static size_t WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp);
         static size_t WriteToMemory(char* ptr, size_t size, size_t nmemb, void* userdata);
-        
-        std::string genRandomString(const int len);
-
-        DownloadResult validateResource(const char *url);
         static size_t CurlHeaderCallback(char *buffer,
                                          size_t size,
                                          size_t nitems,
                                          ResourceStatus *userdata);
 
-        void initCURL();
-
+        void InitCURL();
+        DownloadResult ValidateResource(const char* url);
         void CleanString(std::string &);
         DownloadResult ProcessResultAndCleanup(const DownloadResult result, void (*funcCompleted)(int, const char*), const char* msg);
 
@@ -107,6 +104,7 @@ namespace DownloaderLib
         std::string GetContentLength();
         void PopulateResourceMetadata(const CURLcode cc);
         void ResetMemory(MemoryStruct& m);
+        void MakeStringLower(std::string& str);
 
         DownloadResult ReadMetaFile(SFileMetaData &md, const char *filename);
         DownloadResult CreateSparseFile(std::ofstream& ofs, const char *filePath, const SFileMetaData &fileMeta, const bool includeMeta);
@@ -122,5 +120,6 @@ namespace DownloaderLib
         size_t m_chunkSize = 4194304; // 4 MB
         bool m_isProperlyInitialized = false;
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
+        std::string m_userAgent;
     };
 }

@@ -17,15 +17,15 @@ namespace DownloaderLib
     SingleClient::SingleClient()
     {
         SetChunkSize(4194304); // 4 MB chunks default
-        initCURL();
-        curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, curl_version());
+        m_userAgent = "EzResumeDownloader";
+        InitCURL();
     }
 
     SingleClient::SingleClient(size_t chunkSize, const char *agent)
     {
         SetChunkSize(chunkSize);
-        initCURL();
-        curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, agent);
+        m_userAgent = agent;
+        InitCURL();
     }
 
     SingleClient::~SingleClient()
@@ -43,24 +43,23 @@ namespace DownloaderLib
         }
     }
 
-    std::string SingleClient::genRandomString(const int len)
+    void SingleClient::SetUserAgent(const char* ua)
     {
-        static const char alphanum[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-
-        std::string tmp_s;
-        tmp_s.reserve(len);
-
-        for (int i = 0; i < len; ++i)
-        {
-            tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
-        }
-
-        return tmp_s;
+        m_userAgent = ua;
     }
-        
+
+    void SingleClient::GetUserAgent(char* useragent, unsigned int& size)
+    {
+        size = static_cast<unsigned int>(m_userAgent.length() + 1);
+        useragent = new char[size];
+
+        for (size_t i = 0; i < m_userAgent.length(); i++)
+        {
+            useragent[i] = m_userAgent.c_str()[i];
+        }
+        useragent[m_userAgent.length()] = '\0';
+    }
+                
     DownloadResult SingleClient::ProcessResultAndCleanup(
         const DownloadResult result, 
         void (*funcCompleted)(int, const char*), 
@@ -104,7 +103,7 @@ namespace DownloaderLib
         if (m_chunkSize <= sizeof(SFileMetaData))
             return ProcessResultAndCleanup(DownloadResult::CHUNK_SIZE_TOO_SMALL, funcCompleted, "Chunk size cannot be smaller than SFileMetaData");
 
-        DownloadResult val = validateResource(url);
+        DownloadResult val = ValidateResource(url);
         if (val != DownloadResult::OK)
             return ProcessResultAndCleanup(val, funcCompleted, "Could not validate resource");
 
@@ -115,7 +114,7 @@ namespace DownloaderLib
         metaData.chunkSize = m_chunkSize;
 
         // Check if requested resource is of good size
-        bool doRangedDownload = static_cast<curl_off_t>(m_chunkSize) < m_resourceStatus->ContentLength;
+        bool doRangedDownload = (static_cast<curl_off_t>(m_chunkSize) < m_resourceStatus->ContentLength) && m_resourceStatus->CanAcceptRanges;
 
         std::string tmpSparseFile = sFilePath.parent_path().string() + PathSeparator + sFilePath.filename().stem().string() + ".tmp";
         bool existsSparseFile = std::filesystem::exists(tmpSparseFile);
@@ -167,6 +166,8 @@ namespace DownloaderLib
             DLOG("Setting up cURL and starting download... " );
             // set url
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
+            // Set user agent
+            curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
             // forward all data to this func
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
             struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
@@ -288,7 +289,8 @@ namespace DownloaderLib
 
             // set url
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
-
+            // Set user agent
+            curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
             // forward all data to this func
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToFile);
 
@@ -353,7 +355,6 @@ namespace DownloaderLib
 
         DLOG("Can accept ranges..." << m_resourceStatus->CanAcceptRanges);
         DLOG("ContentLength..." << m_resourceStatus->ContentLength);
-        DLOG("DownloadedSize..." << m_resourceStatus->DownloadedSize);
         DLOG("IsValidated..." << m_resourceStatus->IsValidated);
         DLOG("ResponseCode..." << m_resourceStatus->ResponseCode);
         DLOG("URL..." << m_resourceStatus->URL);
@@ -436,7 +437,7 @@ namespace DownloaderLib
         return len;
     }
 
-    void SingleClient::initCURL()
+    void SingleClient::InitCURL()
     {
         // init global
         static bool globalInitialized = false;
@@ -453,13 +454,8 @@ namespace DownloaderLib
         // prevent ending up in an endless redirection
         curl_easy_setopt(m_curl, CURLOPT_MAXREDIRS, 5L);
 
-#ifdef DEBUG_MODE
         // Switch on full protocol/debug output while testing
-        curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
-
-        // disable progress meter, set to 0L to enable and disable debug output
-        // curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 1L);
-#endif
+        //curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
     }
 
     DownloadResult SingleClient::ReadMetaFile(SFileMetaData &md, const char *filename)
@@ -532,6 +528,14 @@ namespace DownloaderLib
         return m_resourceStatus->ResponseCode;
     }
 
+#pragma warning( push )
+#pragma warning( disable : 4244 )
+    void SingleClient::MakeStringLower(std::string& res)
+    {
+        std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+    }
+#pragma warning( pop )
+
     void SingleClient::CleanString(std::string &res)
     {
         res = std::regex_replace(res, std::regex("^ +| +$|( ) +"), "$1");
@@ -548,7 +552,9 @@ namespace DownloaderLib
 
         for (size_t i = 0; i < (m_resourceStatus->Headers).size(); i++)
         {
-            std::size_t pos = m_resourceStatus->Headers[i].find(tofind);
+            std::string tmpString = m_resourceStatus->Headers[i];
+            MakeStringLower(tmpString);
+            std::size_t pos = tmpString.find(tofind);
             if (pos != std::string::npos)
             {
                 std::string res = m_resourceStatus->Headers[i].substr(pos + tofind.size());
@@ -589,10 +595,7 @@ namespace DownloaderLib
             auto tmp = curl_easy_getinfo(m_curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &m_resourceStatus->ContentLength);
             if (tmp != CURLE_OK)
                 m_resourceStatus->ContentLength = -1;
-            tmp = curl_easy_getinfo(m_curl, CURLINFO_SIZE_DOWNLOAD_T, &m_resourceStatus->DownloadedSize);
-            if (tmp != CURLE_OK)
-                m_resourceStatus->DownloadedSize = -1;
-
+            
             // Check if range download is supported
             std::string r = GetAcceptRangesValue();
 
@@ -608,7 +611,7 @@ namespace DownloaderLib
         }
     }
 
-    DownloadResult SingleClient::validateResource(const char *url)
+    DownloadResult SingleClient::ValidateResource(const char *url)
     {
         // Set the stuff up first!
         if (!m_isProperlyInitialized)
@@ -617,6 +620,7 @@ namespace DownloaderLib
         m_resourceStatus = new SingleClient::ResourceStatus();
         m_resourceStatus->URL = url;
 
+        curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "HEAD");
         curl_easy_setopt(m_curl, CURLOPT_URL, url);
         curl_easy_setopt(m_curl, CURLOPT_FOLLOWLOCATION, 1L);

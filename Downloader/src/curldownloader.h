@@ -17,12 +17,11 @@ namespace DownloaderLib
             const char* url,
             const char* filepath,
             void (*funcCompleted)(int, const char*),
-            int (*funcProgress)(void*, double, double, double, double) = nullptr
+            int (*funcProgress)(void*, double, double, double, double) = nullptr,
+            const unsigned long chunkSizeInBytes = 4194304, /* 4MB */
+            const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );
 
         void TestDownload();
-
-    private:
-        int stringSize(const char *str);
     };
 }
