@@ -329,7 +329,7 @@ namespace DownloaderLib
             // open the file
             FILE* file = nullptr;
 #ifdef __APPLE__
-            file = fopen(tmpFile.c_str(), "wb");
+            file = fopen(tmpSparseFile.c_str(), "wb");
             if (file && (file == 0))
 #else
             auto res = fopen_s(&file, tmpSparseFile.c_str(), "wb");
@@ -560,6 +560,7 @@ namespace DownloaderLib
         return m_resourceStatus->ResponseCode;
     }
 
+#ifdef WIN32
 #pragma warning( push )
 #pragma warning( disable : 4244 )
     void SingleClient::MakeStringLower(std::string& res)
@@ -567,6 +568,14 @@ namespace DownloaderLib
         std::transform(res.begin(), res.end(), res.begin(), ::tolower);
     }
 #pragma warning( pop )
+#endif
+
+#ifdef __APPLE__
+    void SingleClient::MakeStringLower(std::string& res)
+    {
+        std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+    }
+#endif
 
     void SingleClient::CleanString(std::string &res)
     {
