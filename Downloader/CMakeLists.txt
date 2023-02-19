@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 set(DL_SRC_PATH "src")
 
+message(STATUS ${CMAKE_BINARY_DIR})
 
 file(GLOB_RECURSE DL_SRC_LIST
             LIST_DIRECTORIES false 
@@ -13,6 +14,8 @@ add_library(DownloaderLib STATIC
 )
 
 target_compile_features(DownloaderLib PRIVATE cxx_std_17)
+
+set_target_properties(DownloaderLib PROPERTIES PUBLIC_HEADER "src/curldownloader.h;src/common.h")
 
 if(WIN32)
     target_include_directories(DownloaderLib 
@@ -41,11 +44,13 @@ add_library(DownloaderLib::DownloaderLib ALIAS DownloaderLib)
 
 install(TARGETS DownloaderLib
     CONFIGURATIONS Debug
-    DESTINATION "${CMAKE_BINARY_DIR}/Debug"
+    DESTINATION "${CMAKE_BINARY_DIR}/Install/Debug"
+    PUBLIC_HEADER DESTINATION "${CMAKE_BINARY_DIR}/Install/Debug/include"
 )
 
 install(TARGETS DownloaderLib
     CONFIGURATIONS Release
-    DESTINATION "${CMAKE_BINARY_DIR}/Release"
+    DESTINATION "${CMAKE_BINARY_DIR}/Install/Release"
+    PUBLIC_HEADER DESTINATION "${CMAKE_BINARY_DIR}/Install/Release/include"
 )
 
