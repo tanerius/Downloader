@@ -19,6 +19,7 @@ namespace DownloaderLib
         size_t lastDownloadedChunk = 0;
         size_t checkCode = 2308075;
         size_t currentSavedOffset = 0; /* Only used in ranged downloads */
+        char etag[50] = "na"; /* etag string should not be more than 50 chars long */
     };
 
     enum class DownloadResult : int
@@ -27,7 +28,7 @@ namespace DownloaderLib
         COULD_NOT_VALIDATE,
         COULD_NOT_READ_METAFILE,
         CORRUPT_METAFILE,
-        RESOURCE_SIZE_CHANGED,
+        RESOURCE_MODIFIED,
         CANNOT_CREATE_METAFILE,
         CANNOT_OPEN_METAFILE,
         CHUNK_SIZE_TOO_SMALL,
@@ -57,6 +58,7 @@ namespace DownloaderLib
             curl_off_t ContentLength = -1;
             std::string URL;
             std::vector<std::string> Headers;
+            std::string ETag;
         };
 
         SingleClient();

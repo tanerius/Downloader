@@ -92,6 +92,14 @@ namespace DownloaderLib
         metaData.totalChunks = metaData.totalSize / m_chunkSize;
         if (metaData.totalSize % m_chunkSize != 0)
             metaData.totalChunks++;
+        if(m_resourceStatus->ETag.length() > 2)
+        {
+            std::strcpy(metaData.etag, m_resourceStatus->ETag.c_str());
+        }
+        else
+        {
+            std::strcpy(metaData.etag, "na");
+        }
     }
 
     DownloadResult SingleClient::download(
@@ -115,6 +123,8 @@ namespace DownloaderLib
         DownloadResult val = ValidateResource(url);
         if (val != DownloadResult::OK)
             return ProcessResultAndCleanup(val, funcCompleted, "Could not validate resource");
+
+        DLOG("ETag from HEAD is " << m_resourceStatus->ETag << " and is " <<m_resourceStatus->ETag.length() <<  " long");
 
         // Get filename
         auto sFilePath = std::filesystem::path(filepath);
@@ -151,6 +161,7 @@ namespace DownloaderLib
                 DLOG("Reading sparse file " << tmpSparseFile);
                 metaData.totalSize = m_resourceStatus->ContentLength;
                 auto resMeta = ReadMetaFile(metaData, tmpSparseFile.c_str());
+                
                 bool metaFileAlreadyOpened = false;
                 if (resMeta != DownloadResult::OK)
                 {
@@ -171,6 +182,35 @@ namespace DownloaderLib
                     }
                     else
                         return ProcessResultAndCleanup(resMeta, funcCompleted, "Error reading resource meta information");
+                }
+
+                // check etag
+                std::string tmpEtag = metaData.etag;
+                DLOG("ETag from MetaData is " << tmpEtag << " and is " << tmpEtag.length() <<  " long");
+                if(tmpEtag != m_resourceStatus->ETag)
+                {
+                    if(m_conf.ReturnErrorIfSourceChanged)
+                    {
+                        DLOG("Source file has been modified and config says quit");
+                        return ProcessResultAndCleanup(DownloadResult::RESOURCE_MODIFIED, funcCompleted, "Resource has been modified at the source");
+                    }
+                    else
+                    {
+                        DLOG("Source file has been modified but we can continue by restarting download");
+                        metaData.totalSize = m_resourceStatus->ContentLength;
+                        SetMetaDataDefaults(metaData);
+                        if (metaData.totalChunks == 0)
+                            return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, funcCompleted, "Resource has zero size");
+
+                        // Metadata corrupt but config says silently discard and recreate
+                        std::remove(tmpSparseFile.c_str());
+                        resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, true);
+
+                        if (resMeta != DownloadResult::OK)
+                            return ProcessResultAndCleanup(resMeta, funcCompleted, "Error creating resource meta information");
+
+                        metaFileAlreadyOpened = true;
+                    }
                 }
 
                 if(!metaFileAlreadyOpened)
@@ -499,17 +539,12 @@ namespace DownloaderLib
             return DownloadResult::COULD_NOT_READ_METAFILE;
 
         md.checkCode = 5; // in the end should be 2308075
-        auto oldTotal = md.totalSize;
-        ifs.seekg(md.totalSize - sizeof(SFileMetaData), std::ios::beg);
+        
+        ifs.seekg(-sizeof(SFileMetaData), std::ios::end);
         ifs.read(reinterpret_cast<char *>(&md), sizeof(SFileMetaData));
 
         if (ifs.gcount() != sizeof(SFileMetaData) || md.checkCode != 2308075)
             res = DownloadResult::CORRUPT_METAFILE;
-
-        if (oldTotal != md.totalSize)
-        {
-            res = DownloadResult::RESOURCE_SIZE_CHANGED;
-        }
 
         ifs.close();
         return res;
@@ -644,7 +679,10 @@ namespace DownloaderLib
                 m_resourceStatus->CanAcceptRanges = true;
             else
                 m_resourceStatus->CanAcceptRanges = false;
+            
+            m_resourceStatus->ETag = GetETag();
             m_resourceStatus->IsValidated = true;
+
         }
         else
         {
@@ -660,6 +698,8 @@ namespace DownloaderLib
 
         m_resourceStatus = new SingleClient::ResourceStatus();
         m_resourceStatus->URL = url;
+
+        // etag 63eb88b5-3200000
 
         curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "HEAD");
