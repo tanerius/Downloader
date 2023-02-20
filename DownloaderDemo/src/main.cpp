@@ -23,7 +23,7 @@ void foo(int x, const char *p)
 
 int main()
 {
-    auto dlInstance = new DownloaderLib::Downloader();
+    auto dlInstance = new EZResume::Downloader();
     dlInstance->TestDownload();
     return 0;
 

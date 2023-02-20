@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-namespace DownloaderLib
+namespace EZResume
 {
     Downloader::Downloader() {}
 
@@ -12,7 +12,7 @@ namespace DownloaderLib
 
     void Downloader::TestDownload()
     {
-        DownloaderLib::Configutation config;
+        EZResume::Configutation config;
         std::string destFile = ".";
         destFile += PathSeparator;
         destFile += "1GB.bin";
@@ -32,7 +32,7 @@ namespace DownloaderLib
     void Downloader::download(
         const char* url,
         const char* filepath,
-        DownloaderLib::Configutation config,
+        EZResume::Configutation config,
         void (*funcCompleted)(int, const char*),
         void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedNow),
         const unsigned long chunkSizeInBytes,

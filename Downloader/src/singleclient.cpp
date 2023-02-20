@@ -11,7 +11,7 @@
 #endif // DEBUG
 
 
-namespace DownloaderLib
+namespace EZResume
 {
 
     SingleClient::SingleClient()

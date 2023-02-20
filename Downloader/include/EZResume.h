@@ -1,6 +1,9 @@
 #pragma once
-namespace DownloaderLib
+namespace EZResume
 {
+    /// <summary>
+    /// Struct used to configure the downloader
+    /// </summary>
     struct Configutation
     {
         /*
@@ -39,7 +42,7 @@ namespace DownloaderLib
         void download(
             const char* url,
             const char* filepath,
-            DownloaderLib::Configutation config,
+            EZResume::Configutation config,
             void (*funcCompleted)(int, const char*),
             void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr,
             const unsigned long chunkSizeInBytes = 4194304, /* 4MB */

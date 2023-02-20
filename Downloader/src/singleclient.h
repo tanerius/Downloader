@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-namespace DownloaderLib
+namespace EZResume
 {
     struct MemoryStruct {
         char* memory;
@@ -69,8 +69,8 @@ namespace DownloaderLib
         void SetUserAgent(const char* ua);
         unsigned long GetChunkSize() const { return static_cast<unsigned long>(m_chunkSize); }
         void GetUserAgent(char* useragent, unsigned int& size);
-        void SetConfiguration(DownloaderLib::Configutation c) { m_conf = c; }
-        DownloaderLib::Configutation GetConfiguration() { return m_conf; }
+        void SetConfiguration(EZResume::Configutation c) { m_conf = c; }
+        EZResume::Configutation GetConfiguration() { return m_conf; }
 
         /**
          Download url and rename it to satisfy filepath
@@ -133,7 +133,7 @@ namespace DownloaderLib
         bool m_isProperlyInitialized = false;
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
         std::string m_userAgent;
-        DownloaderLib::Configutation m_conf;
+        EZResume::Configutation m_conf;
         void (*m_ProgressCallbackFn)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr;
     };
 }
