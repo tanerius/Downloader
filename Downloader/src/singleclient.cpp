@@ -96,11 +96,19 @@ namespace DownloaderLib
             metaData.totalChunks++;
         if(m_resourceStatus->ETag.length() > 2)
         {
+#ifdef __APPLE__
             std::strcpy(metaData.etag, m_resourceStatus->ETag.c_str());
+#else
+            strcpy_s(metaData.etag, m_resourceStatus->ETag.size() + 1, m_resourceStatus->ETag.c_str());
+#endif
         }
         else
         {
+#ifdef __APPLE__
             std::strcpy(metaData.etag, "na");
+#else
+            strcpy_s(metaData.etag, 3, "na");
+#endif
         }
     }
 
@@ -514,7 +522,7 @@ namespace DownloaderLib
         try {
             if(mem->callback!=nullptr)
             {
-                mem->callback(mem->totalSize, realsize);
+                mem->callback(static_cast<unsigned long>(mem->totalSize), static_cast<unsigned long>(realsize));
             }
         } catch (...) { }
 
@@ -560,7 +568,7 @@ namespace DownloaderLib
 
         md.checkCode = 5; // in the end should be 2308075
         
-        ifs.seekg(-sizeof(SFileMetaData), std::ios::end);
+        ifs.seekg(-static_cast<long>(sizeof(SFileMetaData)), std::ios::end);
         ifs.read(reinterpret_cast<char *>(&md), sizeof(SFileMetaData));
 
         if (ifs.gcount() != sizeof(SFileMetaData) || md.checkCode != 2308075)
