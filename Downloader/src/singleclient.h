@@ -48,7 +48,7 @@ namespace EZResume
     /**
      HTTP Client for single requests - runs in one thread
      */
-    class SingleClient
+    class FARSCAPE_API SingleClient
     {
     public:
         struct ResourceStatus

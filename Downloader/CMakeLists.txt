@@ -11,13 +11,26 @@ file(GLOB_RECURSE DL_SRC_LIST
         )
 
 if(${DOWNLOADER_LINK_STATICALLY})
-add_library(EZResume STATIC 
-        ${DL_SRC_LIST}
-)
+    add_library(EZResume STATIC 
+            ${DL_SRC_LIST}
+    )
 else()
-add_library(EZResume SHARED 
-        ${DL_SRC_LIST}
-)
+    add_library(EZResume SHARED 
+            ${DL_SRC_LIST}
+    )
+
+    if(MSVC)
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+        set(BUILD_SHARED_LIBS TRUE)
+    endif()
+
+    target_compile_definitions(EZResume PRIVATE "EZResume_BUILD_EXPORTS")
+    if(DOWNLOADER_LINK_STATICALLY)
+        message(STATUS "EZResume linking type				STATIC ")
+        add_definitions(-DEZRESUME_STATIC)
+    else()
+        message(STATUS "EZResume linking type				DYNAMIC ")
+    endif()
 endif()
 
 set_property(TARGET EZResume PROPERTY CXX_STANDARD 17)
@@ -34,6 +47,8 @@ if(WIN32)
     target_link_libraries(EZResume
         PUBLIC CURL::libcurl
     )
+
+    
 else()
     target_link_libraries(
         EZResume

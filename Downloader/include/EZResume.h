@@ -1,10 +1,26 @@
 #pragma once
+#if defined(EZR_WIN64) // Any windows 32 or 64 bit
+#if !defined(EZRESUME_STATIC)
+#if defined(EZResume_BUILD_EXPORTS)
+#define EZResume_API __declspec(dllexport)
+#else
+#define EZResume_API __declspec(dllimport)
+#endif
+#else
+#define EZResume_API
+#endif
+#elif defined(EZR_APPLE)
+#define EZResume_API
+#else
+#error "Unknown Apple platform!"
+#endif
+
 namespace EZResume
 {
     /// <summary>
     /// Struct used to configure the downloader
     /// </summary>
-    struct Configutation
+    struct EZResume_API Configutation
     {
         /*
         * If destination file exists should we overwrite it.
@@ -22,7 +38,7 @@ namespace EZResume
         bool RestartDownloadIfMetaInfoCorrupt = false;
     };
 
-    class Downloader
+    class EZResume_APIDownloader
     {
     public:
         Downloader();
