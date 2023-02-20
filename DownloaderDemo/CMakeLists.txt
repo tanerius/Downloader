@@ -20,7 +20,7 @@ target_link_libraries(DownloaderDemo
 )
 
 if(MSVC)
-  target_compile_options(DownloaderDemo PRIVATE /W4 /WX)
+  target_compile_options(DownloaderDemo PRIVATE /W3 /WX)
 else()
   target_compile_options(DownloaderDemo PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()

@@ -1,4 +1,4 @@
-#include "curldownloader.h"
+#include "EZResume.h"
 #include "singleclient.h"
 #include <fstream>
 #include <iostream>

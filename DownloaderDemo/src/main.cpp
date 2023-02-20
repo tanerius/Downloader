@@ -1,4 +1,4 @@
-#include "curldownloader.h"
+#include "EZResume.h"
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
