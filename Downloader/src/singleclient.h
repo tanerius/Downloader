@@ -9,7 +9,8 @@ namespace DownloaderLib
     struct MemoryStruct {
         char* memory;
         size_t size;
-
+        curl_off_t totalSize;
+        void (*callback)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr;
     };
     struct SFileMetaData
     {
@@ -78,7 +79,7 @@ namespace DownloaderLib
             const char *url,
             const char *filepath,
             void (*funcCompleted)(int, const char *),
-            int (*funcProgress)(void *, double, double, double, double) = nullptr
+            void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedSoFar) = nullptr
             );
 
     private:
@@ -88,6 +89,8 @@ namespace DownloaderLib
             S_CREATING,
             S_ERROR
         };
+
+        static int ProgressCallback(void *ptr, curl_off_t dlout, curl_off_t dlnow, curl_off_t , curl_off_t);
 
         static size_t WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
         static size_t WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp);
@@ -131,5 +134,6 @@ namespace DownloaderLib
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
         std::string m_userAgent;
         DownloaderLib::Configutation m_conf;
+        void (*m_ProgressCallbackFn)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr;
     };
 }

@@ -18,6 +18,7 @@ namespace DownloaderLib
     {
         SetChunkSize(4194304); // 4 MB chunks default
         m_userAgent = "EzResumeDownloader";
+        m_ProgressCallbackFn = nullptr;
         InitCURL();
     }
 
@@ -25,6 +26,7 @@ namespace DownloaderLib
     {
         SetChunkSize(chunkSize);
         m_userAgent = agent;
+        m_ProgressCallbackFn = nullptr;
         InitCURL();
     }
 
@@ -106,7 +108,8 @@ namespace DownloaderLib
         const char *url,
         const char *filepath,
         void (*funcCompleted)(int, const char *),
-        int (*funcProgress)(void *, double, double, double, double))
+        void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedSoFar)
+    )
     {
         DLOG("Starting download of " << url << " to " << filepath);
 
@@ -114,7 +117,7 @@ namespace DownloaderLib
         auto start = std::chrono::high_resolution_clock::now();
 #endif // DEBUG
 
-        
+        m_ProgressCallbackFn = funcProgress;
         m_resourceStatus = nullptr;
 
         if (m_chunkSize <= sizeof(SFileMetaData))
@@ -244,6 +247,9 @@ namespace DownloaderLib
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
             struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
             chunk.memory = nullptr;
+            chunk.callback = m_ProgressCallbackFn;
+            chunk.totalSize = metaData.totalSize;
+            
 
             // at least once it should execute
             do
@@ -278,13 +284,14 @@ namespace DownloaderLib
 
                 curl_easy_setopt(m_curl, CURLOPT_RANGE, chunkRange.c_str());
 
+                /* The following for now is not working so i am using an alternative in the WRITEFUNCTION */
+                /*
                 if (funcProgress != nullptr)
                 {
-                    // Internal CURL progressmeter must be disabled if we provide our own callback
-                    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
-                    // Install the callback function (returning non ze`ro from this will stop curl
-                    curl_easy_setopt(m_curl, CURLOPT_PROGRESSFUNCTION, funcProgress);
+                    curl_easy_setopt(m_curl, CURLOPT_XFERINFOFUNCTION, &SingleClient::ProgressCallback);
+                    curl_easy_setopt(m_curl, CURLOPT_XFERINFODATA, &metaData);
                 }
+                */
 
                 // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
                 curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, (void*)&chunk);
@@ -380,13 +387,14 @@ namespace DownloaderLib
                 // write the page body to this file handle. CURLOPT_FILE is also known as CURLOPT_WRITEFILE
                 curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, file);
 
+                /* The following for now is not working so i am using an alternative in the WRITEFUNCTION */
+                /*
                 if (funcProgress != nullptr)
                 {
-                    // Internal CURL progressmeter must be disabled if we provide our own callback
-                    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
-                    // Install the callback function (returning non zero from this will stop curl
-                    curl_easy_setopt(m_curl, CURLOPT_PROGRESSFUNCTION, funcProgress);
+                    curl_easy_setopt(m_curl, CURLOPT_XFERINFOFUNCTION, &SingleClient::ProgressCallback);
+                    curl_easy_setopt(m_curl, CURLOPT_XFERINFODATA, &metaData);
                 }
+                */
 
                 // do it
                 CURLcode result = curl_easy_perform(m_curl);
@@ -476,6 +484,11 @@ namespace DownloaderLib
         return DownloadResult::OK;
     }
 
+    int SingleClient::ProgressCallback(void* , curl_off_t /* dlout */, curl_off_t /* dlnow */, curl_off_t , curl_off_t)
+    {
+        return 0;
+    }
+
     size_t SingleClient::WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
     {
         return fwrite(ptr, size, nmemb, stream);
@@ -497,6 +510,13 @@ namespace DownloaderLib
         memcpy(&(mem->memory[mem->size]), receivedContent, realsize);
         mem->size += realsize;
         mem->memory[mem->size] = 0;
+
+        try {
+            if(mem->callback!=nullptr)
+            {
+                mem->callback(mem->totalSize, realsize);
+            }
+        } catch (...) { }
 
         return realsize;
     }
