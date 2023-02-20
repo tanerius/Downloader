@@ -1,4 +1,5 @@
 #pragma once
+#include <Versions.h>
 #if defined(EZR_WIN64) // Any windows 32 or 64 bit
 #if !defined(EZRESUME_STATIC)
 #if defined(EZResume_BUILD_EXPORTS)
@@ -38,7 +39,7 @@ namespace EZResume
         bool RestartDownloadIfMetaInfoCorrupt = false;
     };
 
-    class EZResume_APIDownloader
+    class EZResume_API Downloader
     {
     public:
         Downloader();
