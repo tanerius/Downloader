@@ -47,23 +47,27 @@ function(congifure_prebuilt_lib test_locations url filename dest)
 endfunction()
 
 
-macro(set_farscape_platform)
+macro(set_platform)
     if(APPLE)
         # MacOS, iOS, watchOS, tvOS
-        set(FARSCAPE_PLATFORM "Apple")
-        set(FS_APPLE "Apple")
+        message(STATUS " * * * Setting MacOS platform.")
+        set(EZResume_PLATFORM "Apple")
+        set(EZR_APPLE "Apple")
     elseif(WIN32 OR WIN64)
+        message(STATUS " * * * Setting Windows platform.")
         # Any windows
-        set(FARSCAPE_PLATFORM "Win64")
-        set(FS_WIN64 "Win64")
+        set(EZResume_PLATFORM "Win64")
+        set(EZR_WIN64 "Win64")
     elseif(UNIX AND NOT APPLE)
+        message(STATUS " * * * Setting Linux platform.")
         # Nix
-        set(FARSCAPE_PLATFORM "Linux")
-        set(FS_LINUX "Linux")
+        set(EZResume_PLATFORM "Linux")
+        set(EZR_LINUX "Linux")
     else()
+        message(STATUS " * * * Setting unknown platform.")
         # Nix
-        set(FARSCAPE_PLATFORM "NA")
-        set(FS_PLATFORM_NA "Linux")
+        set(EZResume_PLATFORM "NA")
+        set(EZR_PLATFORM_NA "Linux")
     endif()
     
 endmacro()

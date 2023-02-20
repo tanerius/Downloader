@@ -10,50 +10,57 @@ file(GLOB_RECURSE DL_SRC_LIST
             ${DL_SRC_PATH}/*
         )
 
-add_library(DownloaderLib STATIC 
+if(${DOWNLOADER_LINK_STATICALLY})
+add_library(EZResume STATIC 
         ${DL_SRC_LIST}
 )
+else()
+add_library(EZResume SHARED 
+        ${DL_SRC_LIST}
+)
+endif()
 
-target_compile_features(DownloaderLib PRIVATE cxx_std_17)
+set_property(TARGET EZResume PROPERTY CXX_STANDARD 17)
+target_compile_features(EZResume PRIVATE cxx_std_17)
 
-set_target_properties(DownloaderLib PROPERTIES PUBLIC_HEADER "${DL_INTERFACE_PATH}/EZResume.h")
+set_target_properties(EZResume PROPERTIES PUBLIC_HEADER "${DL_INTERFACE_PATH}/EZResume.h;${DL_INTERFACE_PATH}/Versions.h")
 
 if(WIN32)
-    target_include_directories(DownloaderLib 
+    target_include_directories(EZResume 
         PUBLIC src
         public ${DL_INTERFACE_PATH}
     )
 
-    target_link_libraries(DownloaderLib
+    target_link_libraries(EZResume
         PUBLIC CURL::libcurl
     )
 else()
     target_link_libraries(
-        DownloaderLib
+        EZResume
             ${LIB_CURL})
 
     target_include_directories(
-        DownloaderLib 
+        EZResume 
             PUBLIC "${CURL_PATH}/include"
             PUBLIC ${DL_INTERFACE_PATH}
     )
 endif()
 
 if(MSVC)
-  target_compile_options(DownloaderLib PRIVATE /W3 /WX)
+  target_compile_options(EZResume PRIVATE /W3 /WX)
 else()
-  target_compile_options(DownloaderLib PRIVATE -Wall -Wextra -pedantic -Werror)
+  target_compile_options(EZResume PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
-add_library(DownloaderLib::DownloaderLib ALIAS DownloaderLib)
+add_library(EZResume::EZResume ALIAS EZResume)
 
-install(TARGETS DownloaderLib
+install(TARGETS EZResume
     CONFIGURATIONS Debug
     DESTINATION "${CMAKE_BINARY_DIR}/Install/Debug"
     PUBLIC_HEADER DESTINATION "${CMAKE_BINARY_DIR}/Install/Debug/include"
 )
 
-install(TARGETS DownloaderLib
+install(TARGETS EZResume
     CONFIGURATIONS Release
     DESTINATION "${CMAKE_BINARY_DIR}/Install/Release"
     PUBLIC_HEADER DESTINATION "${CMAKE_BINARY_DIR}/Install/Release/include"

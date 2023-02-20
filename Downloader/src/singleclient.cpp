@@ -1,4 +1,5 @@
 #include "singleclient.h"
+#include <versions.h>
 #include <filesystem>
 #include <ctime>
 #include <iostream>
@@ -55,7 +56,7 @@ namespace EZResume
         size = static_cast<unsigned int>(m_userAgent.length() + 1);
         useragent = new char[size];
 
-        for (size_t i = 0; i < m_userAgent.length(); i++)
+        for (size_t i = 0; i < size; i++)
         {
             useragent[i] = m_userAgent.c_str()[i];
         }
@@ -96,7 +97,7 @@ namespace EZResume
             metaData.totalChunks++;
         if(m_resourceStatus->ETag.length() > 2)
         {
-#ifdef __APPLE__
+#ifdef EZR_APPLE
             std::strcpy(metaData.etag, m_resourceStatus->ETag.c_str());
 #else
             strcpy_s(metaData.etag, m_resourceStatus->ETag.size() + 1, m_resourceStatus->ETag.c_str());
@@ -104,7 +105,7 @@ namespace EZResume
         }
         else
         {
-#ifdef __APPLE__
+#ifdef EZR_APPLE
             std::strcpy(metaData.etag, "na");
 #else
             strcpy_s(metaData.etag, 3, "na");
@@ -383,7 +384,7 @@ namespace EZResume
 
             // open the file
             FILE* file = nullptr;
-#ifdef __APPLE__
+#ifdef EZR_APPLE
             file = fopen(tmpSparseFile.c_str(), "wb");
             if (file && (file == 0))
 #else
@@ -623,7 +624,7 @@ namespace EZResume
         return m_resourceStatus->ResponseCode;
     }
 
-#ifdef WIN32
+#ifdef EZR_WIN64
 #pragma warning( push )
 #pragma warning( disable : 4244 )
     void SingleClient::MakeStringLower(std::string& res)
@@ -633,7 +634,7 @@ namespace EZResume
 #pragma warning( pop )
 #endif
 
-#ifdef __APPLE__
+#ifdef EZR_APPLE
     void SingleClient::MakeStringLower(std::string& res)
     {
         std::transform(res.begin(), res.end(), res.begin(), ::tolower);

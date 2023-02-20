@@ -11,11 +11,11 @@ add_executable(DownloaderDemo
 
 target_compile_features(DownloaderDemo PRIVATE cxx_std_17)
 
-target_include_directories(DownloaderLib 
+target_include_directories(DownloaderDemo 
         PUBLIC ../Downloader/src)
 
 target_link_libraries(DownloaderDemo
-    PUBLIC DownloaderLib::DownloaderLib
+    PUBLIC EZResume::EZResume
     PRIVATE nlohmann_json::nlohmann_json
 )
 

@@ -1,0 +1,11 @@
+#pragma once
+
+#cmakedefine EZResume_VERSION "@EZResume_VERSION@"
+#cmakedefine EZResume_VERSION_MAJOR "@EZResume_VERSION_MAJOR@"
+#cmakedefine EZResume_VERSION_MINOR "@EZResume_VERSION_MINOR@"
+#cmakedefine EZResume_VERSION_BUILD "@EZResume_VERSION_BUILD@"
+#cmakedefine BUILD_DATE "@BUILD_DATE@"
+#cmakedefine EZResume_PLATFORM "@EZResume_PLATFORM@"
+#cmakedefine EZR_LINUX
+#cmakedefine EZR_WIN64
+#cmakedefine EZR_APPLE

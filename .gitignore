@@ -35,3 +35,4 @@ out/
 CMakeSettings.json
 .vs/
 .vscode/
+Downloader/include/Versions.h
