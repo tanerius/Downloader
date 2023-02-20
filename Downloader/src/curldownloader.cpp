@@ -6,7 +6,6 @@
 
 namespace DownloaderLib
 {
-
     Downloader::Downloader() {}
 
     Downloader::~Downloader() {}
@@ -20,12 +19,14 @@ namespace DownloaderLib
         //https://home.tanerius.com/samples/files/1MB.bin
         //https://home.tanerius.com/samples/files/1GB.bin
 
+        auto f = [](unsigned long /* total */, unsigned long /* current */) {
+            // std::cout << "DL: " << current << "/" << total << std::endl;
+        };
+
         download("https://home.tanerius.com/samples/files/1GB.bin", destFile.c_str(), config, 
             [](int code, const char* msg) {
             std::cout << "Download finished with code: " << code << " " << msg;
-            }, [] (unsigned long total, unsigned long current) {
-                std::cout << "DL: " << current << "/" << total << std::endl;
-            });
+            }, f);
     }
 
     void Downloader::download(
@@ -43,7 +44,6 @@ namespace DownloaderLib
         if (userAgent != nullptr)
             sc.SetUserAgent(userAgent);
         sc.SetConfiguration(config);
-
         sc.download(url, filepath, funcCompleted, funcProgress);
     }
 }
