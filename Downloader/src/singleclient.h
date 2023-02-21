@@ -48,7 +48,7 @@ namespace EZResume
     /**
      HTTP Client for single requests - runs in one thread
      */
-    class EZResume_API SingleClient
+    class SingleClient
     {
     public:
         struct ResourceStatus
@@ -128,7 +128,6 @@ namespace EZResume
 
     private:
         CURL *m_curl;
-        // curl_off_t m_lastruntime;
         size_t m_chunkSize = 4194304; // 4 MB
         bool m_isProperlyInitialized = false;
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
