@@ -10,25 +10,6 @@ namespace EZResume
 
     Downloader::~Downloader() {}
 
-    void Downloader::TestDownload()
-    {
-        EZResume::Configutation config;
-        std::string destFile = ".";
-        destFile += PathSeparator;
-        destFile += "1GB.bin";
-        //https://home.tanerius.com/samples/files/1MB.bin
-        //https://home.tanerius.com/samples/files/1GB.bin
-
-        auto f = [](unsigned long /* total */, unsigned long /* current */) {
-            // std::cout << "DL: " << current << "/" << total << std::endl;
-        };
-
-        download("https://home.tanerius.com/samples/files/1GB.bin", destFile.c_str(), config, 
-            [](int code, const char* msg) {
-            std::cout << "Download finished with code: " << code << " " << msg;
-            }, f);
-    }
-
     void Downloader::download(
         const char* url,
         const char* filepath,

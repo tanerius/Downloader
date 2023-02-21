@@ -65,8 +65,6 @@ namespace EZResume
             const unsigned long chunkSizeInBytes = 4194304, /* 4MB */
             const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );
-
-        void TestDownload();
     };
 }
 

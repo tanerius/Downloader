@@ -28,5 +28,5 @@ add_subdirectory(External)
 add_subdirectory(Downloader)
 
 # Add DownloaderDemo
-add_subdirectory(DownloaderDemo)
+add_subdirectory(DownloaderTest)
 

@@ -12,6 +12,7 @@ namespace EZResume
         curl_off_t totalSize;
         void (*callback)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr;
     };
+
     struct SFileMetaData
     {
         curl_off_t totalSize = 0;
