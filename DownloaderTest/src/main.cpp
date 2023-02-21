@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     d.download(argv[1], argv[2], config,
         [](int code, const char* msg) {
             std::cout << "Download finished with code: " << code << " " << msg << std::endl;
-        }, &progress);
+        }, nullptr);
 
     system("pause");
     return 0;

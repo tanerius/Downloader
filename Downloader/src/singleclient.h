@@ -10,7 +10,7 @@ namespace EZResume
         char* memory;
         size_t size;
         curl_off_t totalSize;
-        void (*callback)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr;
+        DownloadProgressCallback callback = nullptr;
     };
 
     struct SFileMetaData
@@ -22,28 +22,6 @@ namespace EZResume
         size_t checkCode = 2308075;
         size_t currentSavedOffset = 0; /* Only used in ranged downloads */
         char etag[50] = "na"; /* etag string should not be more than 50 chars long */
-    };
-
-    enum class DownloadResult : int
-    {
-        OK = 0,
-        COULD_NOT_VALIDATE,
-        COULD_NOT_READ_METAFILE,
-        CORRUPT_METAFILE,
-        RESOURCE_MODIFIED,
-        CANNOT_CREATE_METAFILE,
-        CANNOT_OPEN_METAFILE,
-        CHUNK_SIZE_TOO_SMALL,
-        RESOURCE_HAS_ZERO_SIZE,
-        DOWNLOADER_NOT_INITIALIZED,
-        DOWNLOADER_EXECUTE_ERROR,
-        INVALID_RESPONSE,
-        CORRUPT_CHUNK_CALCULATION,
-        CANNOT_ACCESS_METAFILE,
-        CANNOT_WRITE_DOWNLOADED_DATA,
-        CANNOT_WRITE_META_DATA,
-        CANNOT_RENAME_TEMP_FILE,
-        DESTINATION_FILE_EXISTS,
     };
 
     /**
@@ -79,8 +57,8 @@ namespace EZResume
         DownloadResult download(
             const char *url,
             const char *filepath,
-            void (*funcCompleted)(int, const char *),
-            void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedSoFar) = nullptr
+            DownloadCompletedCallback,
+            DownloadProgressCallback = nullptr
             );
 
     private:
@@ -134,6 +112,6 @@ namespace EZResume
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
         std::string m_userAgent;
         EZResume::Configutation m_conf;
-        void (*m_ProgressCallbackFn)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr;
+        DownloadProgressCallback m_ProgressCallbackFn = nullptr;
     };
 }

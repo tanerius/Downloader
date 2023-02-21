@@ -18,6 +18,29 @@
 
 namespace EZResume
 {
+    enum class DownloadResult : int
+    {
+        OK = 0,
+        COULD_NOT_READ_METAFILE,
+        CORRUPT_METAFILE,
+        RESOURCE_MODIFIED,
+        CANNOT_CREATE_METAFILE,
+        CANNOT_OPEN_METAFILE,
+        CHUNK_SIZE_TOO_SMALL,
+        RESOURCE_HAS_ZERO_SIZE,
+        DOWNLOADER_NOT_INITIALIZED,
+        DOWNLOADER_EXECUTE_ERROR,
+        INVALID_RESPONSE,
+        CORRUPT_CHUNK_CALCULATION,
+        CANNOT_ACCESS_METAFILE,
+        CANNOT_WRITE_DOWNLOADED_DATA,
+        CANNOT_WRITE_META_DATA,
+        CANNOT_RENAME_TEMP_FILE,
+        DESTINATION_FILE_EXISTS,
+    };
+
+    typedef void (*DownloadCompletedCallback)(int, const char*);
+    typedef void (*DownloadProgressCallback)(unsigned long totalToDownload, unsigned long downloadedNow);
     /// <summary>
     /// Struct used to configure the downloader
     /// </summary>
@@ -60,8 +83,8 @@ namespace EZResume
             const char* url,
             const char* filepath,
             EZResume::Configutation config,
-            void (*funcCompleted)(int, const char*),
-            void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedNow) = nullptr,
+            DownloadCompletedCallback,
+            DownloadProgressCallback = nullptr,
             const unsigned long chunkSizeInBytes = 4194304, /* 4MB */
             const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );

@@ -14,8 +14,8 @@ namespace EZResume
         const char* url,
         const char* filepath,
         EZResume::Configutation config,
-        void (*funcCompleted)(int, const char*),
-        void (*funcProgress)(unsigned long totalToDownload, unsigned long downloadedNow),
+        DownloadCompletedCallback completedCallback,
+        DownloadProgressCallback progressCallback,
         const unsigned long chunkSizeInBytes,
         const char* userAgent
     )
@@ -25,6 +25,6 @@ namespace EZResume
         if (userAgent != nullptr)
             sc.SetUserAgent(userAgent);
         sc.SetConfiguration(config);
-        sc.download(url, filepath, funcCompleted, funcProgress);
+        sc.download(url, filepath, completedCallback, progressCallback);
     }
 }
