@@ -1,67 +1,76 @@
 ﻿{
   "configurations": [
     {
-      "name": "ReleaseSymbols32",
+      "name": "Release32-Static",
       "generator": "Visual Studio 16 2019",
-      "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [ "msvc_x86" ],
+      "configurationType": "Release",
+      "inheritEnvironments": [ "msvc_x32" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
-      "variables": [],
-      "intelliSenseMode": "windows-msvc-x86"
+      "installRoot": "${projectDir}\\out\\install\\${name}"
     },
     {
-      "name": "ReleaseSymbols64",
+      "name": "Release64-Static",
       "generator": "Visual Studio 16 2019 Win64",
-      "configurationType": "RelWithDebInfo",
-      "buildCommandArgs": "/p:PreferredToolArchitecture=x64",
-      "inheritEnvironments": [ "msvc_x64" ],
+      "configurationType": "Release",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
-      "variables": [],
-      "intelliSenseMode": "windows-msvc-x64"
+      "installRoot": "${projectDir}\\out\\install\\${name}"
     },
     {
-      "name": "Release32",
+      "name": "Debug32-Static",
+      "generator": "Visual Studio 16 2019",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x32" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}"
+    },
+    {
+      "name": "Debug64-Static",
+      "generator": "Visual Studio 16 2019 Win64",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}"
+    },
+    {
+      "name": "Release32-Dynamic",
       "generator": "Visual Studio 16 2019",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x32" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "variables": [],
-      "intelliSenseMode": "windows-msvc-x86"
+      "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     },
     {
-      "name": "Release64",
+      "name": "Release64-Dynamic",
       "generator": "Visual Studio 16 2019 Win64",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "variables": [],
-      "intelliSenseMode": "windows-msvc-x64"
+      "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     },
     {
-      "name": "Debug32",
+      "name": "Debug32-Dynamic",
       "generator": "Visual Studio 16 2019",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x32" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "variables": [],
-      "intelliSenseMode": "windows-msvc-x86"
+      "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     },
     {
-      "name": "Debug64",
+      "name": "Debug64-Dynamic",
       "generator": "Visual Studio 16 2019 Win64",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "variables": [],
-      "intelliSenseMode": "windows-msvc-x64"
+      "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     }
   ]
 }

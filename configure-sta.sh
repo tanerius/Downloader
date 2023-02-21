@@ -1,0 +1,1 @@
+cmake -B out -DDOWNLOAD_EXTRACT_TIMESTAMP=On --target 'clean'

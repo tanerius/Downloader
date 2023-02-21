@@ -6,9 +6,6 @@ project(EZResume
     LANGUAGES		CXX	C
 )
 
-
-
-
 # Include helpers
 include(cmake_modules/Helpers.cmake)
 
@@ -16,15 +13,12 @@ set_platform()
 
 OPTION(DOWNLOADER_LINK_STATICALLY		"Build static library"					On)
 OPTION(DOWNLOADER_DEBUG					"Enable debugging logs and asserts"		On)
+set(DOWNLOAD_EXTRACT_TIMESTAMP ON)
 
 # Set some super global stuff here
 configure_file(Configurables/versions.h.in ${PROJECT_SOURCE_DIR}/Downloader/include/Versions.h @ONLY)
 
-if(${DOWNLOADER_LINK_STATICALLY})
-    message(STATUS "* * * Configuring EZResume for static libs")
-else()
-    message(STATUS "* * * Configuring EZResume for dynamic libs")
-endif()
+print_environment()
 
 
 # Add all required externals
