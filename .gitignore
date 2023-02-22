@@ -38,3 +38,4 @@ CMakeSettings.json
 Downloader/include/Versions.h
 .cache/
 build/
+bin/
