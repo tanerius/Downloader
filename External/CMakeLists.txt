@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.21)
 
 # 1. Download all the submodules and do the update crap
 find_package(Git QUIET)

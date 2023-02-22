@@ -1,59 +1,144 @@
 #include "EZResume.h"
 #include <iostream>
 #include <fstream>
+#include <iterator>
+#include <vector>
+#include <cstdio>
 #include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
 
+int result = -1;
 
-TEST(sample_test_case, sample_test)
+TEST(GTestInit, Tests_gtest_is_working)
 {
     EXPECT_EQ(1, 1);
 }
 
-/*
-void testJson()
-{
-    std::ifstream f(".\\taner.json");
-    nlohmann::json data = nlohmann::json::parse(f);
-    std::cout << data.at("name");
-    std::string s = data.dump();
-    std::cout << s << std::endl;
+// Tests that the Foo::Bar() method does Abc.
+TEST(DownloaderInit, Tests_downloader_init) {
+    EZResume::Downloader *d = new EZResume::Downloader();
+    ASSERT_NE(d, nullptr);
+
+    EZResume::Configutation config;
+
+    EXPECT_FALSE(config.OverwriteIfDestinationExists);
+    EXPECT_FALSE(config.RestartDownloadIfMetaInfoCorrupt);
+    EXPECT_TRUE(config.ReturnErrorIfSourceChanged);
+    delete d;
+}
+
+TEST(Download, Test50MB_default) {
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+    
+    std::remove(".\\50MB.bin");
+    std::remove(".\\50MB.tmp");
+
+    d.download("https://home.tanerius.com/samples/files/50MB.bin", ".\\50MB.bin", config,
+        [](int code, const char*) {
+            result = code;
+        }, nullptr);
+
+    std::remove(".\\50MB.bin");
+    std::remove(".\\50MB.tmp");
+    EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
+}
+
+TEST(Download, Test100KB_default) {
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+
+    std::remove(".\\100KB.bin");
+    std::remove(".\\100KB.tmp");
+
+    d.download("https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
+        [](int code, const char*) {
+            result = code;
+        }, nullptr);
+
+    std::remove(".\\100KB.bin");
+    std::remove(".\\100KB.tmp");
+    EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
+}
+
+TEST(Download, Test_chunk_too_small) {
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+
+    std::remove(".\\100KB.bin");
+    std::remove(".\\100KB.tmp");
+
+    d.download("https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
+        [](int code, const char*) {
+            result = code;
+        }, nullptr, 512);
+
+    std::remove(".\\100KB.bin");
+    std::remove(".\\100KB.tmp");
+    EXPECT_EQ(result, (int)EZResume::DownloadResult::CHUNK_SIZE_TOO_SMALL);
 }
 
 
-unsigned long totalSize = 0;
-unsigned long currentSize = 0;
+TEST(Download, Test_meta_file_corrupt) {
+    EZResume::Downloader d;
+    EZResume::Configutation config;
 
-void progress(unsigned long total , unsigned long  current )
-{
-    currentSize += current;
-    std::cout << "Downloading..." << currentSize << "/" << total << std::endl;
+    std::remove(".\\10MB.bin");
+    std::remove(".\\10MB.tmp");
+
+    // create a corrupted meta file
+    std::ofstream ofs(".\\10MB.tmp", std::ios::binary | std::ios::out);
+    if ((ofs.rdstate() & std::ifstream::failbit) != 0)
+        FAIL();
+
+    char c[6] = {"Test!"};
+
+    ofs.write(c, 6);
+    ofs.close();
+
+
+    d.download("https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
+        [](int code, const char*) {
+            result = code;
+        }, nullptr);
+
+    std::remove(".\\10MB.bin");
+    std::remove(".\\10MB.tmp");
+    EXPECT_EQ(result, (int)EZResume::DownloadResult::CORRUPT_METAFILE);
+}
+
+TEST(Download, Test_override_corrupt_metafile) {
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+
+    config.RestartDownloadIfMetaInfoCorrupt = true;
+
+    std::remove(".\\10MB.bin");
+    std::remove(".\\10MB.tmp");
+
+    // create a corrupted meta file
+    std::ofstream ofs(".\\10MB.tmp", std::ios::binary | std::ios::out);
+    if ((ofs.rdstate() & std::ifstream::failbit) != 0)
+        FAIL();
+
+    char c[6] = { "Test!" };
+
+    ofs.write(c, 6);
+    ofs.close();
+
+
+    d.download("https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
+        [](int code, const char*) {
+            result = code;
+        }, nullptr);
+
+    std::remove(".\\10MB.bin");
+    std::remove(".\\10MB.tmp");
+    EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
 }
 
 int main(int argc, char* argv[])
 {
-
-    if (argc != 3)
-    {
-        std::cout << "Arguments are: DownloaderTest.exe <URL> <output filename>" << std::endl;
-        system("pause");
-        return 0;
-    }
-
-    currentSize = 0;
-    EZResume::Downloader d;
-    EZResume::Configutation config;
-    config.OverwriteIfDestinationExists = true; 
-
-    //https://home.tanerius.com/samples/files/1MB.bin
-    //https://home.tanerius.com/samples/files/1GB.bin
-
-    d.download(argv[1], argv[2], config,
-        [](int code, const char* msg) {
-            std::cout << "Download finished with code: " << code << " " << msg << std::endl;
-        }, nullptr);
-
-    system("pause");
-    return 0;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
-*/

@@ -723,7 +723,7 @@ namespace EZResume
     {
         // Set the stuff up first!
         if (!m_isProperlyInitialized)
-            return DownloadResult::DOWNLOADER_NOT_INITIALIZED;
+            return DownloadResult::CHUNK_SIZE_TOO_SMALL;
 
         m_resourceStatus = new SingleClient::ResourceStatus();
         m_resourceStatus->URL = url;

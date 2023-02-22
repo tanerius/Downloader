@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.21)
 
 project(EZResume 
     VERSION			1.0.0
@@ -19,8 +19,6 @@ set(DOWNLOAD_EXTRACT_TIMESTAMP ON)
 configure_file(Configurables/versions.h.in ${PROJECT_SOURCE_DIR}/Downloader/include/Versions.h @ONLY)
 
 print_environment()
-
-enable_testing()
 
 # Add all required externals
 add_subdirectory(External)

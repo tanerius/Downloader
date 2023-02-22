@@ -1,16 +1,19 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.21)
+
+if(${DOWNLOADER_LINK_STATICALLY})
+    set(gtest_force_shared_crt off)
+else()
+    set(gtest_force_shared_crt on)
+endif()
 
 include(FetchContent)
 
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.13.0
-)
+FetchContent_Declare(googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG main)
 FetchContent_MakeAvailable(googletest)
-add_library(GTest::GTest INTERFACE IMPORTED)
 
-target_link_libraries(GTest::GTest INTERFACE gtest_main)
+enable_testing()
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
 FetchContent_MakeAvailable(json)
@@ -27,7 +30,7 @@ target_include_directories(DownloaderTest
 target_link_libraries(DownloaderTest
     PUBLIC EZResume::EZResume
     PRIVATE nlohmann_json::nlohmann_json
-    PRIVATE GTest::GTest
+    PRIVATE gtest
 )
 
 if(MSVC)
