@@ -2,6 +2,13 @@
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <gtest/gtest.h>
+
+
+TEST(sample_test_case, sample_test)
+{
+    EXPECT_EQ(1, 1);
+}
 
 /*
 void testJson()
@@ -12,7 +19,7 @@ void testJson()
     std::string s = data.dump();
     std::cout << s << std::endl;
 }
-*/
+
 
 unsigned long totalSize = 0;
 unsigned long currentSize = 0;
@@ -36,7 +43,7 @@ int main(int argc, char* argv[])
     currentSize = 0;
     EZResume::Downloader d;
     EZResume::Configutation config;
-    config.OverwriteIfDestinationExists = true; /* overwrite if the file already exists */
+    config.OverwriteIfDestinationExists = true; 
 
     //https://home.tanerius.com/samples/files/1MB.bin
     //https://home.tanerius.com/samples/files/1GB.bin
@@ -49,3 +56,4 @@ int main(int argc, char* argv[])
     system("pause");
     return 0;
 }
+*/

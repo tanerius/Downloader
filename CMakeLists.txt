@@ -20,6 +20,7 @@ configure_file(Configurables/versions.h.in ${PROJECT_SOURCE_DIR}/Downloader/incl
 
 print_environment()
 
+enable_testing()
 
 # Add all required externals
 add_subdirectory(External)
