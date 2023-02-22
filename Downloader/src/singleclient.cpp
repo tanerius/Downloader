@@ -15,16 +15,18 @@
 namespace EZResume
 {
 
-    SingleClient::SingleClient()
+    SingleClient::SingleClient(const int id)
     {
+        m_id = id;
         SetChunkSize(4194304); // 4 MB chunks default
         m_userAgent = "EzResumeDownloader";
         m_ProgressCallbackFn = nullptr;
         InitCURL();
     }
 
-    SingleClient::SingleClient(size_t chunkSize, const char *agent)
+    SingleClient::SingleClient(const int id, size_t chunkSize, const char *agent)
     {
+        m_id = id;
         SetChunkSize(chunkSize);
         m_userAgent = agent;
         m_ProgressCallbackFn = nullptr;
@@ -65,13 +67,13 @@ namespace EZResume
                 
     DownloadResult SingleClient::ProcessResultAndCleanup(
         const DownloadResult result, 
-        void (*funcCompleted)(int, const char*), 
+        DownloadCompletedCallback completedCallback,
         const char* msg)
     {
         curl_easy_reset(m_curl);
 
-        if (funcCompleted != nullptr)
-            funcCompleted((int)result, msg);
+        if (completedCallback != nullptr)
+            completedCallback(m_id, (int)result, msg);
 
         if (m_resourceStatus != nullptr)
             delete m_resourceStatus;
@@ -255,6 +257,7 @@ namespace EZResume
             // forward all data to this func
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
             struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
+            chunk.id = m_id;
             chunk.memory = nullptr;
             chunk.callback = m_ProgressCallbackFn;
             chunk.totalSize = metaData.totalSize;
@@ -264,6 +267,7 @@ namespace EZResume
             do
             {
                 chunk.memory = (char*)malloc(1);    /* will be grown as needed by the realloc above */
+                chunk.id = m_id;
                 chunk.size = 0;                     /* no data at this point */
 
                 bool eof = false;
@@ -440,7 +444,7 @@ namespace EZResume
         }
 
         if (dcc != nullptr)
-            dcc((int)DownloadResult::OK, filepath);
+            dcc(m_id, (int)DownloadResult::OK, filepath);
 
         DLOG("Can accept ranges..." << m_resourceStatus->CanAcceptRanges);
         DLOG("ContentLength..." << m_resourceStatus->ContentLength);
@@ -523,7 +527,7 @@ namespace EZResume
         try {
             if(mem->callback!=nullptr)
             {
-                mem->callback(static_cast<unsigned long>(mem->totalSize), static_cast<unsigned long>(realsize));
+                mem->callback(mem->id, static_cast<unsigned long>(mem->totalSize), static_cast<unsigned long>(realsize));
             }
         } catch (...) { }
 

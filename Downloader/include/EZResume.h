@@ -18,8 +18,8 @@
 
 namespace EZResume
 {
-    typedef void (*DownloadCompletedCallback)(int, const char*);
-    typedef void (*DownloadProgressCallback)(unsigned long totalToDownload, unsigned long downloadedNow);
+    typedef void (*DownloadCompletedCallback)(int id, int, const char*);
+    typedef void (*DownloadProgressCallback)(int id, unsigned long totalToDownload, unsigned long downloadedNow);
     typedef unsigned long ulong;
 
     /// @brief This scoped enum described the Download info state
@@ -84,6 +84,7 @@ namespace EZResume
         /// <param name="chunkSizeInBytes">How big should a download chunk be. Must be multiple of 1024</param>
         /// <param name="userAgent">Which useragent should we sent to the remote server.</param>
         void download(
+            const int id,
             const char* url,
             const char* filepath,
             EZResume::Configutation config,

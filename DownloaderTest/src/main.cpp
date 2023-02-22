@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 int result = -1;
+int dlID = -1;
 
 TEST(GTestInit, Tests_gtest_is_working)
 {
@@ -34,11 +35,13 @@ TEST(Download, Test50MB_default) {
     std::remove(".\\50MB.bin");
     std::remove(".\\50MB.tmp");
 
-    d.download("https://home.tanerius.com/samples/files/50MB.bin", ".\\50MB.bin", config,
-        [](int code, const char*) {
+    d.download(1, "https://home.tanerius.com/samples/files/50MB.bin", ".\\50MB.bin", config,
+        [](int id, int code, const char*) {
             result = code;
+            dlID = id;
         }, nullptr);
 
+    EXPECT_EQ(dlID, 1);
     std::remove(".\\50MB.bin");
     std::remove(".\\50MB.tmp");
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
@@ -51,11 +54,13 @@ TEST(Download, Test100KB_default) {
     std::remove(".\\100KB.bin");
     std::remove(".\\100KB.tmp");
 
-    d.download("https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
-        [](int code, const char*) {
+    d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
+        [](int id, int code, const char*) {
             result = code;
+            dlID = id;
         }, nullptr);
 
+    EXPECT_EQ(dlID, 1);
     std::remove(".\\100KB.bin");
     std::remove(".\\100KB.tmp");
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
@@ -68,13 +73,15 @@ TEST(Download, Test_chunk_too_small) {
     std::remove(".\\100KB.bin");
     std::remove(".\\100KB.tmp");
 
-    d.download("https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
-        [](int code, const char*) {
+    d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
+        [](int id, int code, const char*) {
             result = code;
+            dlID = id;
         }, nullptr, 512);
 
     std::remove(".\\100KB.bin");
     std::remove(".\\100KB.tmp");
+    EXPECT_EQ(dlID, 1);
     EXPECT_EQ(result, (int)EZResume::DownloadResult::CHUNK_SIZE_TOO_SMALL);
 }
 
@@ -97,11 +104,13 @@ TEST(Download, Test_meta_file_corrupt) {
     ofs.close();
 
 
-    d.download("https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
-        [](int code, const char*) {
+    d.download(1, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
+        [](int id, int code, const char*) {
             result = code;
+            dlID = id;
         }, nullptr);
 
+    EXPECT_EQ(dlID, 1);
     std::remove(".\\10MB.bin");
     std::remove(".\\10MB.tmp");
     EXPECT_EQ(result, (int)EZResume::DownloadResult::CORRUPT_METAFILE);
@@ -127,13 +136,15 @@ TEST(Download, Test_override_corrupt_metafile) {
     ofs.close();
 
 
-    d.download("https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
-        [](int code, const char*) {
+    d.download(1, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
+        [](int id, int code, const char*) {
             result = code;
+            dlID = id;
         }, nullptr);
 
     std::remove(".\\10MB.bin");
     std::remove(".\\10MB.tmp");
+    EXPECT_EQ(dlID, 1);
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
 }
 

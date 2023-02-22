@@ -11,6 +11,7 @@ namespace EZResume
         size_t size;
         curl_off_t totalSize;
         DownloadProgressCallback callback = nullptr;
+        int id = -1;
     };
 
     struct SFileMetaData
@@ -40,9 +41,10 @@ namespace EZResume
             std::vector<std::string> Headers;
             std::string ETag;
         };
-
-        SingleClient();
-        SingleClient(size_t chunkSize, const char *agent);
+        SingleClient() = delete;
+        SingleClient(const SingleClient&) = delete;
+        SingleClient(const int id);
+        SingleClient(const int id, size_t chunkSize, const char *agent);
         virtual ~SingleClient();
         void SetChunkSize(size_t s);
         void SetUserAgent(const char* ua);
@@ -82,7 +84,7 @@ namespace EZResume
         void InitCURL();
         DownloadResult ValidateResource(const char* url);
         void CleanString(std::string &);
-        DownloadResult ProcessResultAndCleanup(const DownloadResult result, void (*funcCompleted)(int, const char*), const char* msg);
+        DownloadResult ProcessResultAndCleanup(const DownloadResult result, DownloadCompletedCallback, const char* msg);
 
         // HTTP Statuses
         long GetLastResponseCode() const;
@@ -113,5 +115,6 @@ namespace EZResume
         std::string m_userAgent;
         EZResume::Configutation m_conf;
         DownloadProgressCallback m_ProgressCallbackFn = nullptr;
+        int m_id = -1;
     };
 }
