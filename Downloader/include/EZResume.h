@@ -18,29 +18,33 @@
 
 namespace EZResume
 {
-    enum class DownloadResult : int
-    {
-        OK = 0,
-        COULD_NOT_READ_METAFILE,
-        CORRUPT_METAFILE,
-        RESOURCE_MODIFIED,
-        CANNOT_CREATE_METAFILE,
-        CANNOT_OPEN_METAFILE,
-        CHUNK_SIZE_TOO_SMALL,
-        RESOURCE_HAS_ZERO_SIZE,
-        DOWNLOADER_NOT_INITIALIZED,
-        DOWNLOADER_EXECUTE_ERROR,
-        INVALID_RESPONSE,
-        CORRUPT_CHUNK_CALCULATION,
-        CANNOT_ACCESS_METAFILE,
-        CANNOT_WRITE_DOWNLOADED_DATA,
-        CANNOT_WRITE_META_DATA,
-        CANNOT_RENAME_TEMP_FILE,
-        DESTINATION_FILE_EXISTS,
-    };
-
     typedef void (*DownloadCompletedCallback)(int, const char*);
     typedef void (*DownloadProgressCallback)(unsigned long totalToDownload, unsigned long downloadedNow);
+    typedef unsigned long ulong;
+
+    /// @brief This scoped enum described the Download info state
+    enum class DownloadResult : int
+    {
+        OK = 0,                             /* Operation finished without errors */
+        IDLE,                               /* Download not started */
+        DOWNLOADING,                        /* Download is currently in progress */
+        COULD_NOT_READ_METAFILE,            /* Unable to open the tmp metafile */
+        CORRUPT_METAFILE,                   /* Metafile has been corrupted */
+        RESOURCE_MODIFIED,                  /* Source file has changed */
+        CANNOT_CREATE_METAFILE,             /* Unable to create metafile. */
+        CANNOT_OPEN_METAFILE,               /* Unable to open the tmp metafile */
+        CHUNK_SIZE_TOO_SMALL,               /* Currently set chunk size is too small */
+        RESOURCE_HAS_ZERO_SIZE,             /* The requested download has a size of 0 */
+        DOWNLOADER_NOT_INITIALIZED,         /* Downloader was not correctly initialized */
+        DOWNLOADER_EXECUTE_ERROR,           /* Unable to perform the CURL request */
+        INVALID_RESPONSE,                   /* Unexpected result HTTP response from the server */
+        CORRUPT_CHUNK_CALCULATION,          /* Starting offset is larger than ending offset */
+        CANNOT_WRITE_DOWNLOADED_DATA,       /* Was unable to write the chunk data to the download file */
+        CANNOT_WRITE_META_DATA,             /* Was unable to write the meta data to the download file */
+        CANNOT_RENAME_TEMP_FILE,            /* Failed to rename the tmp metafile after download */
+        DESTINATION_FILE_EXISTS,            /* The destination file exists and overwrite flag is not set */
+    };
+
     /// <summary>
     /// Struct used to configure the downloader
     /// </summary>

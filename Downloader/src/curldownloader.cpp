@@ -6,7 +6,7 @@
 
 namespace EZResume
 {
-    Downloader::Downloader() {}
+    Downloader::Downloader() { }
 
     Downloader::~Downloader() {}
 
