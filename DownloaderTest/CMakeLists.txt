@@ -39,7 +39,9 @@ else()
   target_compile_options(DownloaderTest PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
-add_test(DownloaderGTest DownloaderTest)
+add_test(NAME DownloaderTest
+    COMMAND DownloaderTest
+    )
 
 install(TARGETS DownloaderTest
     CONFIGURATIONS Debug
