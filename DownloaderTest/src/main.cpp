@@ -4,6 +4,7 @@
 #include <iterator>
 #include <vector>
 #include <cstdio>
+#include <thread>
 #include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
 
@@ -146,6 +147,67 @@ TEST(Download, Test_override_corrupt_metafile) {
     std::remove(".\\10MB.tmp");
     EXPECT_EQ(dlID, 1);
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
+}
+
+int idlocal1 = 0;
+int retlocal1 = -1;
+
+void DownloadTask_1(int taskid)
+{
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+
+    std::remove(".\\10MB-1.bin");
+    std::remove(".\\10MB-1.tmp");
+    int idlocal = 0;
+
+    d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB-1.bin", config,
+        [](int id_, int code_, const char*) {
+            idlocal1 = id_;
+            retlocal1 = code_;
+        }, nullptr);
+
+    std::remove(".\\10MB-1.bin");
+    std::remove(".\\10MB-1.tmp");
+}
+
+int idlocal2 = 0;
+int retlocal2 = -1;
+
+void DownloadTask_2(int taskid)
+{
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+
+    std::remove(".\\10MB-2.bin");
+    std::remove(".\\10MB-2.tmp");
+    int idlocal = 0;
+
+    d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB-2.bin", config,
+        [](int id_, int code_, const char*) {
+            idlocal2 = id_;
+            retlocal2 = code_;
+        }, nullptr);
+
+    std::remove(".\\10MB-2.bin");
+    std::remove(".\\10MB-2.tmp");
+}
+
+TEST(ThreaddedDownload, Test_multithreaded_download) {
+    // Constructs the new thread and runs it. Does not block execution.
+    std::thread t1(DownloadTask_1, 2);
+    std::thread t2(DownloadTask_2, 3);
+
+    // Do other things...
+
+    // Makes the main thread wait for the new thread to finish execution, therefore blocks its own execution.
+    t1.join();
+    t2.join();
+
+    EXPECT_EQ(idlocal1, 2);
+    EXPECT_EQ(retlocal1, (int)EZResume::DownloadResult::OK);
+    EXPECT_EQ(idlocal2, 3);
+    EXPECT_EQ(retlocal2, (int)EZResume::DownloadResult::OK);
 }
 
 int main(int argc, char* argv[])

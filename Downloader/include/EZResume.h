@@ -1,19 +1,20 @@
 #pragma once
 #include <Versions.h>
+
 #if defined(EZR_WIN64) // Any windows 32 or 64 bit
-#if !defined(EZRESUME_STATIC)
-#if defined(EZResume_BUILD_EXPORTS)
-#define EZResume_API __declspec(dllexport)
-#else
-#define EZResume_API __declspec(dllimport)
-#endif
-#else
-#define EZResume_API
-#endif
+    #ifndef EZRESUME_STATIC
+        #ifdef EZResume_BUILD_EXPORTS
+            #define EZResume_API __declspec(dllexport)
+        #else
+            #define EZResume_API __declspec(dllimport)
+        #endif
+    #else
+        #define EZResume_API
+    #endif
 #elif defined(EZR_APPLE)
-#define EZResume_API
+    #define EZResume_API
 #else
-#error "Unknown Apple platform!"
+    #error "Unknown Apple platform!"
 #endif
 
 namespace EZResume

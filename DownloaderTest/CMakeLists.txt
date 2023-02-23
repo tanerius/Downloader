@@ -43,6 +43,8 @@ add_test(NAME DownloaderTest
     COMMAND DownloaderTest
     )
 
+
+
 #install(TARGETS DownloaderTest
 #    CONFIGURATIONS Debug
 #    DESTINATION "${CMAKE_BINARY_DIR}/Install/Debug"

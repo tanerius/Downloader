@@ -10,10 +10,12 @@ file(GLOB_RECURSE DL_SRC_LIST
             ${DL_SRC_PATH}/*
         )
 
-if(${DOWNLOADER_LINK_STATICALLY})
+if(DOWNLOADER_LINK_STATICALLY)
     add_library(EZResume STATIC 
             ${DL_SRC_LIST}
     )
+    target_compile_definitions(EZResume PUBLIC -DEZRESUME_STATIC)
+
 else()
     add_library(EZResume SHARED 
             ${DL_SRC_LIST}
@@ -25,12 +27,6 @@ else()
     endif()
 
     target_compile_definitions(EZResume PRIVATE "EZResume_BUILD_EXPORTS")
-    if(DOWNLOADER_LINK_STATICALLY)
-        message(STATUS "EZResume linking type				STATIC ")
-        add_definitions(-DEZRESUME_STATIC)
-    else()
-        message(STATUS "EZResume linking type				DYNAMIC ")
-    endif()
 endif()
 
 set_property(TARGET EZResume PROPERTY CXX_STANDARD 17)
@@ -68,6 +64,7 @@ else()
 endif()
 
 add_library(EZResume::EZResume ALIAS EZResume)
+
 
 install(TARGETS EZResume
     CONFIGURATIONS Debug

@@ -71,7 +71,7 @@ endmacro()
 
 function(print_environment)
     message(STATUS "** EZResume_PLATFORM					${EZResume_PLATFORM}")
-    message(STATUS "** CONFIG_TYPE					        ${CONFIG_TYPE}")
+    message(STATUS "** CMAKE_BUILD_TYPE					    ${CMAKE_BUILD_TYPE}")
     if(DOWNLOADER_LINK_STATICALLY)
         message(STATUS "** EZResume linking type				STATIC ")
     else()
