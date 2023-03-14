@@ -159,7 +159,6 @@ void DownloadTask_1(int taskid)
 
     std::remove(".\\10MB-1.bin");
     std::remove(".\\10MB-1.tmp");
-    int idlocal = 0;
 
     d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB-1.bin", config,
         [](int id_, int code_, const char*) {
@@ -181,7 +180,6 @@ void DownloadTask_2(int taskid)
 
     std::remove(".\\10MB-2.bin");
     std::remove(".\\10MB-2.tmp");
-    int idlocal = 0;
 
     d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB-2.bin", config,
         [](int id_, int code_, const char*) {
