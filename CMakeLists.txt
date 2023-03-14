@@ -12,8 +12,14 @@ include(cmake_modules/Helpers.cmake)
 set_platform()
 
 OPTION(DOWNLOADER_LINK_STATICALLY		"Build static library"					On)
-OPTION(DOWNLOADER_DEBUG					"Enable debugging logs and asserts"		On)
+OPTION(DOWNLOADER_DEBUG					"Enable debugging logs and asserts"	   Off)
+OPTION(DOWNLOADER_BUILD_TESTS			"Whether to build the tests"		    On)
 set(DOWNLOAD_EXTRACT_TIMESTAMP ON)
+
+set(DOWNLOADER_BIN_FOLDER "${PROJECT_BINARY_DIR}/Downloader")
+if(DOWNLOADER_DEBUG)
+    set(DEBUG true)
+endif()
 
 # Set some super global stuff here
 configure_file(Configurables/versions.h.in ${PROJECT_SOURCE_DIR}/Downloader/include/Versions.h @ONLY)
@@ -27,5 +33,8 @@ add_subdirectory(External)
 add_subdirectory(Downloader)
 
 # Add DownloaderDemo
-add_subdirectory(DownloaderTest)
+
+if(${DOWNLOADER_BUILD_TESTS})
+    add_subdirectory(DownloaderTest)
+endif()
 

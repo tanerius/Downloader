@@ -9,3 +9,4 @@
 #cmakedefine EZR_LINUX
 #cmakedefine EZR_WIN64
 #cmakedefine EZR_APPLE
+#cmakedefine DEBUG

@@ -19,8 +19,8 @@ FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download
 FetchContent_MakeAvailable(json)
 
 add_executable(DownloaderTest
-  "src/main.cpp"
- )
+    "src/main.cpp"
+    )
 
 target_compile_features(DownloaderTest PRIVATE cxx_std_17)
 
@@ -34,16 +34,20 @@ target_link_libraries(DownloaderTest
 )
 
 if(MSVC)
-  target_compile_options(DownloaderTest PRIVATE /W3 /WX)
+    target_compile_options(DownloaderTest PRIVATE /W3 /WX)
 else()
-  target_compile_options(DownloaderTest PRIVATE -Wall -Wextra -pedantic -Werror)
+    target_compile_options(DownloaderTest PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
 add_test(NAME DownloaderTest
     COMMAND DownloaderTest
     )
 
-
+if(NOT DOWNLOADER_LINK_STATICALLY)
+    add_custom_command(
+        TARGET DownloaderTest POST_BUILD 
+        COMMAND $<$<CONFIG:Debug,Release>:${CMAKE_COMMAND}> $<$<CONFIG:Debug,Release>:-E> $<$<CONFIG:Debug,Release>:copy_if_different> $<$<CONFIG:Debug,Release>:${DOWNLOADER_BIN_FOLDER}/$<CONFIG>/EZResume.dll> $<TARGET_FILE_DIR:DownloaderTest>)
+endif()
 
 #install(TARGETS DownloaderTest
 #    CONFIGURATIONS Debug
