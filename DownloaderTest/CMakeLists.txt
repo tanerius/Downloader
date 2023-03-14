@@ -44,10 +44,17 @@ add_test(NAME DownloaderTest
     )
 
 if(NOT DOWNLOADER_LINK_STATICALLY)
-    add_custom_command(
-        TARGET DownloaderTest POST_BUILD 
-        COMMAND $<$<CONFIG:Debug,Release>:${CMAKE_COMMAND}> $<$<CONFIG:Debug,Release>:-E> $<$<CONFIG:Debug,Release>:copy_if_different> $<$<CONFIG:Debug,Release>:${DOWNLOADER_BIN_FOLDER}/$<CONFIG>/EZResume.dll> $<TARGET_FILE_DIR:DownloaderTest>)
+    if(${EZR_WIN64} STREQUAL "Win64")
+        add_custom_command(
+            TARGET DownloaderTest POST_BUILD 
+            COMMAND $<$<CONFIG:Debug,Release>:${CMAKE_COMMAND}> $<$<CONFIG:Debug,Release>:-E> $<$<CONFIG:Debug,Release>:copy_if_different> $<$<CONFIG:Debug,Release>:${DOWNLOADER_BIN_FOLDER}/$<CONFIG>/EZResume.dll> $<TARGET_FILE_DIR:DownloaderTest>)
+    elseif(${EZR_WIN64} STREQUAL "Apple")
+        add_custom_command(
+            TARGET DownloaderTest POST_BUILD 
+            COMMAND $<$<CONFIG:Debug,Release>:${CMAKE_COMMAND}> $<$<CONFIG:Debug,Release>:-E> $<$<CONFIG:Debug,Release>:copy_if_different> $<$<CONFIG:Debug,Release>:${DOWNLOADER_BIN_FOLDER}/$<CONFIG>/libEZResume.dylib> $<TARGET_FILE_DIR:DownloaderTest>)
+    endif()
 endif()
+
 
 #install(TARGETS DownloaderTest
 #    CONFIGURATIONS Debug
