@@ -26,6 +26,13 @@ configure_file(Configurables/versions.h.in ${PROJECT_SOURCE_DIR}/Downloader/incl
 
 print_environment()
 
+if(${EZResume_PLATFORM} STREQUAL "Win64")
+    set(DOWNLOADER_LIBOUTPUTNAME "ezresume")
+elseif(${EZResume_PLATFORM} STREQUAL "Apple")
+    set(DOWNLOADER_LIBOUTPUTNAME "ezresume_${EZResume_VERSION}")
+endif()
+
+
 # Add all required externals
 add_subdirectory(External)
 

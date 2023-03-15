@@ -63,6 +63,16 @@ namespace EZResume
             DownloadProgressCallback = nullptr
             );
 
+        /**
+         Download url and rename it to satisfy filepath
+         */
+        DownloadResult get(
+            const char *url,
+            char *responseBody,
+            DownloadCompletedCallback,
+            DownloadProgressCallback = nullptr
+            );
+
     private:
         enum FileMetaStatus
         {

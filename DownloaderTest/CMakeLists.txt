@@ -47,11 +47,11 @@ if(NOT DOWNLOADER_LINK_STATICALLY)
     if(${EZResume_PLATFORM} STREQUAL "Win64")
         add_custom_command(
             TARGET DownloaderTest POST_BUILD 
-            COMMAND $<$<CONFIG:Debug,Release>:${CMAKE_COMMAND}> $<$<CONFIG:Debug,Release>:-E> $<$<CONFIG:Debug,Release>:copy_if_different> $<$<CONFIG:Debug,Release>:${DOWNLOADER_BIN_FOLDER}/$<CONFIG>/EZResume.dll> $<TARGET_FILE_DIR:DownloaderTest>)
+            COMMAND $<$<CONFIG:Debug,Release>:${CMAKE_COMMAND}> $<$<CONFIG:Debug,Release>:-E> $<$<CONFIG:Debug,Release>:copy_if_different> $<$<CONFIG:Debug,Release>:${DOWNLOADER_BIN_FOLDER}/$<CONFIG>/${DOWNLOADER_LIBOUTPUTNAME}.dll> $<TARGET_FILE_DIR:DownloaderTest>)
     elseif(${EZResume_PLATFORM} STREQUAL "Apple")
         add_custom_command(
             TARGET DownloaderTest POST_BUILD 
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DOWNLOADER_BIN_FOLDER}/libEZResume.dylib $<TARGET_FILE_DIR:DownloaderTest>)
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DOWNLOADER_BIN_FOLDER}/lib${DOWNLOADER_LIBOUTPUTNAME}.dylib $<TARGET_FILE_DIR:DownloaderTest>)
     endif()
 endif()
 

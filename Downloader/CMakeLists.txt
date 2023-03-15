@@ -32,7 +32,10 @@ endif()
 set_property(TARGET EZResume PROPERTY CXX_STANDARD 17)
 target_compile_features(EZResume PRIVATE cxx_std_17)
 
-set_target_properties(EZResume PROPERTIES PUBLIC_HEADER "${DL_INTERFACE_PATH}/EZResume.h;${DL_INTERFACE_PATH}/Versions.h")
+set_target_properties(EZResume PROPERTIES 
+    PUBLIC_HEADER "${DL_INTERFACE_PATH}/EZResume.h;${DL_INTERFACE_PATH}/Versions.h"
+    OUTPUT_NAME ${DOWNLOADER_LIBOUTPUTNAME}
+    )
 
 if(WIN32)
     target_include_directories(EZResume 
