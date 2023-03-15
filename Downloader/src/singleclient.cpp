@@ -38,6 +38,13 @@ namespace EZResume
         curl_easy_cleanup(m_curl);
     }
 
+    char* SingleClient::GetVersion() const 
+    {
+        char* v = new char[10];
+        std::strcpy(v, EZResume_VERSION);
+        return v;
+    }
+
     void SingleClient::SetChunkSize(size_t s)
     {
         m_isProperlyInitialized = false;
