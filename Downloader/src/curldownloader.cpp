@@ -10,6 +10,13 @@ namespace EZResume
 
     Downloader::~Downloader() {}
 
+    char* Downloader::GetVersion(int& length)
+    {
+        SingleClient sc(0);
+        length = 10;
+        return sc.GetVersion();
+    }
+
     void Downloader::download(
         const int id,
         const char* url,
