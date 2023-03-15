@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 #ifdef WIN32 
-#define PathSeparator      '\\'
+#define PathSeparator      "\\"
 #else
 #define PathSeparator      "/"
 #endif
