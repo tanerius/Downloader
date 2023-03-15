@@ -8,8 +8,15 @@
 #include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
 
+#ifdef WIN32 
+#define PathSeparator      '\\'
+#else
+#define PathSeparator      "/"
+#endif
+
 int result = -1;
 int dlID = -1;
+ 
 
 TEST(GTestInit, Tests_gtest_is_working)
 {
@@ -32,19 +39,22 @@ TEST(DownloaderInit, Tests_downloader_init) {
 TEST(Download, Test50MB_default) {
     EZResume::Downloader d;
     EZResume::Configutation config;
-    
-    std::remove(".\\50MB.bin");
-    std::remove(".\\50MB.tmp");
 
-    d.download(1, "https://home.tanerius.com/samples/files/50MB.bin", ".\\50MB.bin", config,
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("50MB.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("50MB.tmp");
+    
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+
+    d.download(1, "https://home.tanerius.com/samples/files/50MB.bin", dataFile.c_str(), config,
         [](int id, int code, const char*) {
             result = code;
             dlID = id;
         }, nullptr);
 
     EXPECT_EQ(dlID, 1);
-    std::remove(".\\50MB.bin");
-    std::remove(".\\50MB.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
 }
 
@@ -52,18 +62,21 @@ TEST(Download, Test100KB_default) {
     EZResume::Downloader d;
     EZResume::Configutation config;
 
-    std::remove(".\\100KB.bin");
-    std::remove(".\\100KB.tmp");
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("100KB.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("100KB.tmp");
 
-    d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+
+    d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
         [](int id, int code, const char*) {
             result = code;
             dlID = id;
         }, nullptr);
 
     EXPECT_EQ(dlID, 1);
-    std::remove(".\\100KB.bin");
-    std::remove(".\\100KB.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
 }
 
@@ -71,17 +84,20 @@ TEST(Download, Test_chunk_too_small) {
     EZResume::Downloader d;
     EZResume::Configutation config;
 
-    std::remove(".\\100KB.bin");
-    std::remove(".\\100KB.tmp");
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("100KB.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("100KB.tmp");
 
-    d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", ".\\100KB.bin", config,
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+
+    d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
         [](int id, int code, const char*) {
             result = code;
             dlID = id;
         }, nullptr, 512);
 
-    std::remove(".\\100KB.bin");
-    std::remove(".\\100KB.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
     EXPECT_EQ(dlID, 1);
     EXPECT_EQ(result, (int)EZResume::DownloadResult::CHUNK_SIZE_TOO_SMALL);
 }
@@ -91,11 +107,14 @@ TEST(Download, Test_meta_file_corrupt) {
     EZResume::Downloader d;
     EZResume::Configutation config;
 
-    std::remove(".\\10MB.bin");
-    std::remove(".\\10MB.tmp");
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("10MB.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("10MB.tmp");
+
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
 
     // create a corrupted meta file
-    std::ofstream ofs(".\\10MB.tmp", std::ios::binary | std::ios::out);
+    std::ofstream ofs(metaFile.c_str(), std::ios::binary | std::ios::out);
     if ((ofs.rdstate() & std::ifstream::failbit) != 0)
         FAIL();
 
@@ -105,15 +124,15 @@ TEST(Download, Test_meta_file_corrupt) {
     ofs.close();
 
 
-    d.download(1, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
+    d.download(1, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
         [](int id, int code, const char*) {
             result = code;
             dlID = id;
         }, nullptr);
 
     EXPECT_EQ(dlID, 1);
-    std::remove(".\\10MB.bin");
-    std::remove(".\\10MB.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
     EXPECT_EQ(result, (int)EZResume::DownloadResult::CORRUPT_METAFILE);
 }
 
@@ -122,12 +141,14 @@ TEST(Download, Test_override_corrupt_metafile) {
     EZResume::Configutation config;
 
     config.RestartDownloadIfMetaInfoCorrupt = true;
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("10MB.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("10MB.tmp");
 
-    std::remove(".\\10MB.bin");
-    std::remove(".\\10MB.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
 
     // create a corrupted meta file
-    std::ofstream ofs(".\\10MB.tmp", std::ios::binary | std::ios::out);
+    std::ofstream ofs(metaFile.c_str(), std::ios::binary | std::ios::out);
     if ((ofs.rdstate() & std::ifstream::failbit) != 0)
         FAIL();
 
@@ -137,14 +158,14 @@ TEST(Download, Test_override_corrupt_metafile) {
     ofs.close();
 
 
-    d.download(1, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB.bin", config,
+    d.download(1, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
         [](int id, int code, const char*) {
             result = code;
             dlID = id;
         }, nullptr);
 
-    std::remove(".\\10MB.bin");
-    std::remove(".\\10MB.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
     EXPECT_EQ(dlID, 1);
     EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
 }
@@ -157,17 +178,20 @@ void DownloadTask_1(int taskid)
     EZResume::Downloader d;
     EZResume::Configutation config;
 
-    std::remove(".\\10MB-1.bin");
-    std::remove(".\\10MB-1.tmp");
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.tmp");
 
-    d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB-1.bin", config,
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+
+    d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
         [](int id_, int code_, const char*) {
             idlocal1 = id_;
             retlocal1 = code_;
         }, nullptr);
 
-    std::remove(".\\10MB-1.bin");
-    std::remove(".\\10MB-1.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
 }
 
 int idlocal2 = 0;
@@ -178,17 +202,20 @@ void DownloadTask_2(int taskid)
     EZResume::Downloader d;
     EZResume::Configutation config;
 
-    std::remove(".\\10MB-2.bin");
-    std::remove(".\\10MB-2.tmp");
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.tmp");
 
-    d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", ".\\10MB-2.bin", config,
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+
+    d.download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
         [](int id_, int code_, const char*) {
             idlocal2 = id_;
             retlocal2 = code_;
         }, nullptr);
 
-    std::remove(".\\10MB-2.bin");
-    std::remove(".\\10MB-2.tmp");
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
 }
 
 TEST(ThreaddedDownload, Test_multithreaded_download) {
