@@ -31,8 +31,6 @@ In the above cases EZResume will simply restart the download in resumable or non
 CMakeLists
 ## TODO  
 1. make it swag - refactor
-2. build a good api from the final lib
-3. Hook up the dl progress
-4. 
+2. Improve this documentation
 
 # Downloader

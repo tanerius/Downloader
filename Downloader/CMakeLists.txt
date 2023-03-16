@@ -29,6 +29,12 @@ else()
     target_compile_definitions(EZResume PRIVATE "EZResume_BUILD_EXPORTS")
 endif()
 
+if(MSVC)
+    # Statically linked CRT
+    set_property(TARGET EZResume PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 set_property(TARGET EZResume PROPERTY CXX_STANDARD 17)
 target_compile_features(EZResume PRIVATE cxx_std_17)
 
