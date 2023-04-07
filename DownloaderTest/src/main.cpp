@@ -237,6 +237,29 @@ TEST(ThreaddedDownload, Test_multithreaded_download) {
     EXPECT_EQ(retlocal2, (int)EZResume::DownloadResult::OK);
 }
 
+
+TEST(FTPDownload, Test200MB_default) {
+    EZResume::Downloader d;
+    EZResume::Configutation config;
+
+    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("200MB_ftp.bin");
+    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("200MB_ftp.tmp");
+
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+
+    d.download(1, "ftp://212.183.159.230/pub/200MB.zip", dataFile.c_str(), config,
+        [](int id, int code, const char*) {
+            result = code;
+            dlID = id;
+        }, nullptr);
+
+    EXPECT_EQ(dlID, 1);
+    std::remove(dataFile.c_str());
+    std::remove(metaFile.c_str());
+    EXPECT_EQ(result, (int)EZResume::DownloadResult::OK);
+}
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
