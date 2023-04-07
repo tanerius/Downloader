@@ -65,6 +65,11 @@ namespace EZResume
         * or return with an error
         */
         bool RestartDownloadIfMetaInfoCorrupt = false;
+        /*
+        * This is the chunk size for a resumable download. 4 MB chunk is the default. If the requested file is smaller
+        * it will be downloaded as a single file otherwise it will be a segmented download with ability to resume.
+        */
+        unsigned long ChunkSizeInBytes = 4194304; /* 4MB */
     };
 
     class EZResume_API Downloader
@@ -82,7 +87,6 @@ namespace EZResume
         /// <param name="config">Configutation struct for the downloader</param>
         /// <param name="funcCompleted">Callback when the download is finished</param>
         /// <param name="funcProgress">Callback for the download progress</param>
-        /// <param name="chunkSizeInBytes">How big should a download chunk be. Must be multiple of 1024</param>
         /// <param name="userAgent">Which useragent should we sent to the remote server.</param>
         void download(
             const int id,
@@ -91,7 +95,6 @@ namespace EZResume
             EZResume::Configutation config,
             DownloadCompletedCallback,
             DownloadProgressCallback = nullptr,
-            const unsigned long chunkSizeInBytes = 4194304, /* 4MB */
             const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );
 

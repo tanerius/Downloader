@@ -39,3 +39,4 @@ Downloader/include/Versions.h
 .cache/
 build/
 bin/
+install/

@@ -24,12 +24,11 @@ namespace EZResume
         EZResume::Configutation config,
         DownloadCompletedCallback completedCallback,
         DownloadProgressCallback progressCallback,
-        const unsigned long chunkSizeInBytes,
         const char* userAgent
     )
     {
         SingleClient sc(id);
-        sc.SetChunkSize(chunkSizeInBytes);
+        sc.SetChunkSize(config.ChunkSizeInBytes);
         if (userAgent != nullptr)
             sc.SetUserAgent(userAgent);
         sc.SetConfiguration(config);
