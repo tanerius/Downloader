@@ -87,7 +87,6 @@ namespace EZResume
         /// <param name="config">Configutation struct for the downloader</param>
         /// <param name="funcCompleted">Callback when the download is finished</param>
         /// <param name="funcProgress">Callback for the download progress</param>
-        /// <param name="chunkSizeInBytes">How big should a download chunk be. Must be multiple of 1024</param>
         /// <param name="userAgent">Which useragent should we sent to the remote server.</param>
         void download(
             const int id,
