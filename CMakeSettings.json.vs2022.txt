@@ -5,71 +5,87 @@
       "generator": "Visual Studio 17 2022",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x32" ],
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}"
+      "intelliSenseMode": "windows-msvc-x86",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe"
     },
     {
       "name": "Release64-Static",
       "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "Release",
+      "intelliSenseMode": "windows-msvc-x64",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}"
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe"
     },
     {
       "name": "Debug32-Static",
       "generator": "Visual Studio 17 2022",
       "configurationType": "Debug",
+      "intelliSenseMode": "windows-msvc-x86",
       "inheritEnvironments": [ "msvc_x32" ],
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}"
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe"
     },
     {
       "name": "Debug64-Static",
       "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "Debug",
+      "intelliSenseMode": "windows-msvc-x64",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}"
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe"
     },
     {
       "name": "Release32-Dynamic",
       "generator": "Visual Studio 17 2022",
       "configurationType": "Release",
+      "intelliSenseMode": "windows-msvc-x86",
       "inheritEnvironments": [ "msvc_x32" ],
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
+      "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe"
     },
     {
       "name": "Release64-Dynamic",
       "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "Release",
+      "intelliSenseMode": "windows-msvc-x64",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe",
       "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     },
     {
       "name": "Debug32-Dynamic",
       "generator": "Visual Studio 17 2022",
       "configurationType": "Debug",
+      "intelliSenseMode": "windows-msvc-x86",
       "inheritEnvironments": [ "msvc_x32" ],
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe",
       "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     },
     {
       "name": "Debug64-Dynamic",
       "generator": "Visual Studio 17 2022 Win64",
       "configurationType": "Debug",
+      "intelliSenseMode": "windows-msvc-x64",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildCommandArgs": "-p:PreferredToolArchitecture=x64",
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe",
       "cmakeCommandArgs": "-DDOWNLOADER_LINK_STATICALLY=Off"
     }
   ]

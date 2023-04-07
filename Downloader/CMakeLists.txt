@@ -16,6 +16,26 @@ if(DOWNLOADER_LINK_STATICALLY)
     )
     target_compile_definitions(EZResume PUBLIC -DEZRESUME_STATIC)
 
+    if(MSVC)
+        set(CompilerFlags
+            CMAKE_CXX_FLAGS
+            CMAKE_CXX_FLAGS_DEBUG
+            CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_CXX_FLAGS_MINSIZEREL
+            CMAKE_CXX_FLAGS_RELWITHDEBINFO
+            CMAKE_C_FLAGS
+            CMAKE_C_FLAGS_DEBUG
+            CMAKE_C_FLAGS_RELEASE
+            CMAKE_C_FLAGS_MINSIZEREL
+            CMAKE_C_FLAGS_RELWITHDEBINFO
+            )
+        foreach(CompilerFlag ${CompilerFlags})
+            string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+            set(${CompilerFlag} "${${CompilerFlag}}" CACHE STRING "msvc compiler flags" FORCE)
+            message("MSVC flags: ${CompilerFlag}:${${CompilerFlag}}")
+        endforeach()
+    endif()
+
 else()
     add_library(EZResume SHARED 
             ${DL_SRC_LIST}
@@ -24,15 +44,27 @@ else()
     if(MSVC)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
         set(BUILD_SHARED_LIBS TRUE)
+
+        set(CompilerFlags
+            CMAKE_CXX_FLAGS
+            CMAKE_CXX_FLAGS_DEBUG
+            CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_CXX_FLAGS_MINSIZEREL
+            CMAKE_CXX_FLAGS_RELWITHDEBINFO
+            CMAKE_C_FLAGS
+            CMAKE_C_FLAGS_DEBUG
+            CMAKE_C_FLAGS_RELEASE
+            CMAKE_C_FLAGS_MINSIZEREL
+            CMAKE_C_FLAGS_RELWITHDEBINFO
+        )
+        foreach(CompilerFlag ${CompilerFlags})
+            string(REPLACE "/MT" "/MD" ${CompilerFlag} "${${CompilerFlag}}")
+            set(${CompilerFlag} "${${CompilerFlag}}" CACHE STRING "msvc compiler flags" FORCE)
+            message("MSVC flags: ${CompilerFlag}:${${CompilerFlag}}")
+        endforeach()
     endif()
 
     target_compile_definitions(EZResume PRIVATE "EZResume_BUILD_EXPORTS")
-endif()
-
-if(MSVC)
-    # Statically linked CRT
-    set_property(TARGET EZResume PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 set_property(TARGET EZResume PROPERTY CXX_STANDARD 17)

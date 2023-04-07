@@ -41,7 +41,11 @@ namespace EZResume
     char* SingleClient::GetVersion() const 
     {
         char* v = new char[10];
+#ifdef EZR_APPLE
         std::strcpy(v, EZResume_VERSION);
+#else
+        strcpy_s(v, 6, EZResume_VERSION);
+#endif
         return v;
     }
 
