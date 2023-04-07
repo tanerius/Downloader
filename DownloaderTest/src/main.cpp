@@ -90,11 +90,13 @@ TEST(Download, Test_chunk_too_small) {
     std::remove(dataFile.c_str());
     std::remove(metaFile.c_str());
 
+    config.ChunkSizeInBytes = 512L;
+
     d.download(1, "https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
         [](int id, int code, const char*) {
             result = code;
             dlID = id;
-        }, nullptr, 512);
+        }, nullptr);
 
     std::remove(dataFile.c_str());
     std::remove(metaFile.c_str());
