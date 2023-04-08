@@ -6,7 +6,7 @@ Work in progress...
   
 This is my implementation of a file downloader which supports multiple protocols (such as http, https, ftp), is thread safe, supports resumable download, is cross-platform (tested on win and mac), which uses open source libraries. I wrote this becaus I could not find one to satisfy a simple interface and ease of use written in C++. EZResume is based on libcurl, which can support the following features:
 
-✅ Support Multi-protocol. Since teemo based on libcurl, so it supports all protocols that same as libcurl.
+✅ Support Multi-protocol. Since this library is based on libcurl, so it supports all protocols that same as libcurl.
 
 ✅ Support multi-threaded download.
 
