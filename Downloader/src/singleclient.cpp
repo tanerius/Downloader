@@ -20,7 +20,6 @@ namespace EZResume
         m_id = id;
         SetChunkSize(4194304); // 4 MB chunks default
         m_userAgent = "EzResumeDownloader";
-        m_ProgressCallbackFn = nullptr;
         InitCURL();
     }
 
@@ -29,7 +28,6 @@ namespace EZResume
         m_id = id;
         SetChunkSize(chunkSize);
         m_userAgent = agent;
-        m_ProgressCallbackFn = nullptr;
         InitCURL();
     }
 
@@ -78,13 +76,13 @@ namespace EZResume
                 
     DownloadResult SingleClient::ProcessResultAndCleanup(
         const DownloadResult result, 
-        DownloadCompletedCallback completedCallback,
+        IDownloaderHandler* cbh,
         const char* msg)
     {
         curl_easy_reset(m_curl);
 
-        if (completedCallback != nullptr)
-            completedCallback(m_id, (int)result, msg);
+        if (cbh != nullptr)
+            cbh->DownloadCompleted(m_id, result, msg);
 
         if (m_resourceStatus != nullptr)
             delete m_resourceStatus;
@@ -126,11 +124,10 @@ namespace EZResume
         }
     }
 
-    DownloadResult SingleClient::download(
+    DownloadResult SingleClient::Download(
         const char *url,
         const char *filepath,
-        DownloadCompletedCallback dcc,
-        DownloadProgressCallback dpc
+        IDownloaderHandler* cbh
     )
     {
         DLOG("Starting download of " << url << " to " << filepath);
@@ -139,15 +136,14 @@ namespace EZResume
         auto start = std::chrono::high_resolution_clock::now();
 #endif // DEBUG
 
-        m_ProgressCallbackFn = dpc;
         m_resourceStatus = nullptr;
 
         if (m_chunkSize <= sizeof(SFileMetaData))
-            return ProcessResultAndCleanup(DownloadResult::CHUNK_SIZE_TOO_SMALL, dcc, "Chunk size cannot be smaller than SFileMetaData");
+            return ProcessResultAndCleanup(DownloadResult::CHUNK_SIZE_TOO_SMALL, cbh, "Chunk size cannot be smaller than SFileMetaData");
 
         DownloadResult val = ValidateResource(url);
         if (val != DownloadResult::OK)
-            return ProcessResultAndCleanup(val, dcc, "Could not validate resource");
+            return ProcessResultAndCleanup(val, cbh, "Could not validate resource");
 
         DLOG("ETag from HEAD is " << m_resourceStatus->ETag << " and is " <<m_resourceStatus->ETag.length() <<  " long");
 
@@ -162,7 +158,7 @@ namespace EZResume
             if(m_conf.OverwriteIfDestinationExists)
                 std::remove(sFilePath.string().c_str());
             else
-                return ProcessResultAndCleanup(DownloadResult::DESTINATION_FILE_EXISTS, dcc, "Destination file already exists");
+                return ProcessResultAndCleanup(DownloadResult::DESTINATION_FILE_EXISTS, cbh, "Destination file already exists");
         }
 
         // Check if requested resource is of good size
@@ -194,19 +190,19 @@ namespace EZResume
                     {
                         SetMetaDataDefaults(metaData);
                         if (metaData.totalChunks == 0)
-                            return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, dcc, "Resource has zero size");
+                            return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, cbh, "Resource has zero size");
 
                         // Metadata corrupt but config says silently discard and recreate
                         std::remove(tmpSparseFile.c_str());
                         resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, true);
 
                         if (resMeta != DownloadResult::OK)
-                            return ProcessResultAndCleanup(resMeta, dcc, "Error creating resource meta information");
+                            return ProcessResultAndCleanup(resMeta, cbh, "Error creating resource meta information");
 
                         metaFileAlreadyOpened = true;
                     }
                     else
-                        return ProcessResultAndCleanup(resMeta, dcc, "Error reading resource meta information");
+                        return ProcessResultAndCleanup(resMeta, cbh, "Error reading resource meta information");
                 }
 
                 // check etag
@@ -217,7 +213,7 @@ namespace EZResume
                     if(m_conf.ReturnErrorIfSourceChanged)
                     {
                         DLOG("Source file has been modified and config says quit");
-                        return ProcessResultAndCleanup(DownloadResult::RESOURCE_MODIFIED, dcc, "Resource has been modified at the source");
+                        return ProcessResultAndCleanup(DownloadResult::RESOURCE_MODIFIED, cbh, "Resource has been modified at the source");
                     }
                     else
                     {
@@ -225,14 +221,14 @@ namespace EZResume
                         metaData.totalSize = m_resourceStatus->ContentLength;
                         SetMetaDataDefaults(metaData);
                         if (metaData.totalChunks == 0)
-                            return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, dcc, "Resource has zero size");
+                            return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, cbh, "Resource has zero size");
 
                         // Metadata corrupt but config says silently discard and recreate
                         std::remove(tmpSparseFile.c_str());
                         resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, true);
 
                         if (resMeta != DownloadResult::OK)
-                            return ProcessResultAndCleanup(resMeta, dcc, "Error creating resource meta information");
+                            return ProcessResultAndCleanup(resMeta, cbh, "Error creating resource meta information");
 
                         metaFileAlreadyOpened = true;
                     }
@@ -248,17 +244,17 @@ namespace EZResume
                 SetMetaDataDefaults(metaData);
 
                 if (metaData.totalChunks == 0)
-                    return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, dcc, "Resource has zero size");
+                    return ProcessResultAndCleanup(DownloadResult::RESOURCE_HAS_ZERO_SIZE, cbh, "Resource has zero size");
 
                 // this is a fresh download
                 auto resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, true);
 
                 if (resMeta != DownloadResult::OK)
-                    return ProcessResultAndCleanup(resMeta, dcc, "Error creating resource meta information");
+                    return ProcessResultAndCleanup(resMeta, cbh, "Error creating resource meta information");
             }
 
             if ((sparseFileStream.rdstate() & std::ifstream::failbit) != 0)
-                return ProcessResultAndCleanup(DownloadResult::CANNOT_OPEN_METAFILE, dcc, "Error opening resource meta information");
+                return ProcessResultAndCleanup(DownloadResult::CANNOT_OPEN_METAFILE, cbh, "Error opening resource meta information");
 
             DLOG("Setting up cURL and starting download... " );
             // set url
@@ -270,7 +266,7 @@ namespace EZResume
             struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
             chunk.id = m_id;
             chunk.memory = nullptr;
-            chunk.callback = m_ProgressCallbackFn;
+            chunk.callback = cbh;
             chunk.totalSize = metaData.totalSize;
             
 
@@ -299,7 +295,7 @@ namespace EZResume
                 {
                     sparseFileStream.close();
                     ResetMemory(chunk);
-                    return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, dcc, "Error in calculating chunk size");
+                    return ProcessResultAndCleanup(DownloadResult::CORRUPT_CHUNK_CALCULATION, cbh, "Error in calculating chunk size");
                 }
 
                 std::string chunkRange = std::to_string(segmentStart) + ((eof) ? "-" : "-" + std::to_string(segmentEnd));
@@ -334,7 +330,7 @@ namespace EZResume
                     {
                         sparseFileStream.close();
                         ResetMemory(chunk);
-                        return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, dcc, "Response code is bad");
+                        return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, cbh, "Response code is bad");
                     }
 
                     /* If all is well chunk will have our data that we need to append */
@@ -345,14 +341,14 @@ namespace EZResume
                     {
                         sparseFileStream.close();
                         ResetMemory(chunk);
-                        return ProcessResultAndCleanup(writeResult, dcc, "Was not able to write downloaded data");
+                        return ProcessResultAndCleanup(writeResult, cbh, "Was not able to write downloaded data");
                     }
                 }
                 else
                 {
                     sparseFileStream.close();
                     ResetMemory(chunk);
-                    return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, dcc, "Error performing the curl request");
+                    return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, cbh, "Error performing the curl request");
                 }
 
                 ResetMemory(chunk);
@@ -370,7 +366,7 @@ namespace EZResume
             int ret = std::rename(tmpSparseFile.c_str(), sFilePath.string().c_str());
 
             if (ret > 0)
-                return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, dcc, "Cannot rename the temp file");
+                return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, cbh, "Cannot rename the temp file");
 
             curl_easy_reset(m_curl);
         }
@@ -388,7 +384,7 @@ namespace EZResume
             auto resMeta = CreateSparseFile(sparseFileStream, tmpSparseFile.c_str(), metaData, false);
             sparseFileStream.close();
             if (resMeta != DownloadResult::OK)
-                return ProcessResultAndCleanup(resMeta, dcc, "Error creating resource meta information");
+                return ProcessResultAndCleanup(resMeta, cbh, "Error creating resource meta information");
 
             // set url
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
@@ -435,7 +431,7 @@ namespace EZResume
                     result = curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &responseCode);
 
                     if(responseCode < 200 || responseCode >= 300)
-                        return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, dcc, "Response code is bad");
+                        return ProcessResultAndCleanup(DownloadResult::INVALID_RESPONSE, cbh, "Response code is bad");
 
                     // check if destination file exists if so remove it
                     std::remove(sFilePath.string().c_str());
@@ -444,18 +440,18 @@ namespace EZResume
                     ret = std::rename(tmpSparseFile.c_str(), sFilePath.string().c_str());
 
                     if(ret > 0)
-                        return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, dcc, "Cannot rename the temp file");
+                        return ProcessResultAndCleanup(DownloadResult::CANNOT_RENAME_TEMP_FILE, cbh, "Cannot rename the temp file");
                 }
                 else
-                    return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, dcc, "Error performing the curl request");
+                    return ProcessResultAndCleanup(DownloadResult::DOWNLOADER_EXECUTE_ERROR, cbh, "Error performing the curl request");
 
                 
             }
             curl_easy_reset(m_curl);
         }
 
-        if (dcc != nullptr)
-            dcc(m_id, (int)DownloadResult::OK, filepath);
+        if (cbh != nullptr)
+            cbh->DownloadCompleted(m_id, DownloadResult::OK, filepath);
 
         DLOG("Can accept ranges..." << m_resourceStatus->CanAcceptRanges);
         DLOG("ContentLength..." << m_resourceStatus->ContentLength);
@@ -538,7 +534,7 @@ namespace EZResume
         try {
             if(mem->callback!=nullptr)
             {
-                mem->callback(mem->id, static_cast<unsigned long>(mem->totalSize), static_cast<unsigned long>(realsize));
+                mem->callback->DownloadProgress(mem->id, static_cast<unsigned long>(mem->totalSize), static_cast<unsigned long>(realsize));
             }
         } catch (...) { }
 

@@ -1,6 +1,8 @@
 # EZResume File Downloader Library in C++  
 
-Work in progress...
+Current version is: *1.2.0*  
+  
+Work in progress...  
   
 This is my implementation of a file downloader which supports multiple protocols (such as http, https, ftp), is thread safe, supports resumable download, is cross-platform (tested on win and mac), which uses open source libraries. I wrote this becaus I could not find one to satisfy a simple interface and ease of use written in C++. EZResume is based on libcurl, which can support the following features:
 
@@ -47,6 +49,27 @@ request to download lets say a file from *https://example.com/somefile.zip* and 
 // A very simple Example of how to use the library
 #include <EZResume.h>
 
+// We will define a class to handle the callbacks
+class CallBackHandlerTest : public EZResume::IDownloaderHandler
+{
+public:
+    int m_id = -1;
+    EZResume::DownloadResult m_lastResult = EZResume::DownloadResult::IDLE;
+public:
+    // Called when download has completed
+    void DownloadCompleted(const int id, const EZResume::DownloadResult result, const char*)
+    {
+        m_id = id;
+        m_lastResult = result;
+    }
+
+    // Called every after every stream buffer written locally
+    void DownloadProgress(const int, const EZResume::ulong, const EZResume::ulong)
+    {
+
+    }
+};
+
 int main() {
     // First we create a doenloader object 
     EZResume::Downloader d;
@@ -56,26 +79,28 @@ int main() {
     int id = 1;
     // and finally we create a result variable to store our download result
     EZResume::DownloadResult result;
+
+    // we declare the class to handle callbacks ... this isnt necessary but useful to check if everything went well
+    CallBackHandlerTest* cbh = new CallBackHandlerTest();
     
     // then we simply start the download
-    d.download(
+    d.Download(
         id,                                 // pass the iinstace id from before
         "https://example.com/somefile.zip",  // the url where to download from
         "./myfile.zip",                     // output filename (can be a relative too)
         config,                             // the config
-        [](int id, int code, const char*) {
-            result = code;
-        },                                  // callback for when download completes
-        nullptr                             // download progress callback
-        );
+        cbh);
 
     // finally we check if the download was ok
-    if(result == EZResume::DownloadResult::OK)
+    if(cbh->m_lastResult == EZResume::DownloadResult::OK)
     {
         // Download completed successfully
         return 0;
     }
 
-    return (int)result;
+    int ret  = (int) cbh->m_lastResult;
+    delete cbh;
+
+    return ret;
 }
 ```

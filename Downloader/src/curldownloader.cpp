@@ -17,13 +17,12 @@ namespace EZResume
         return sc.GetVersion();
     }
 
-    void Downloader::download(
+    void Downloader::Download(
         const int id,
         const char* url,
         const char* filepath,
         EZResume::Configutation config,
-        DownloadCompletedCallback completedCallback,
-        DownloadProgressCallback progressCallback,
+        IDownloaderHandler* cbh,
         const char* userAgent
     )
     {
@@ -32,6 +31,6 @@ namespace EZResume
         if (userAgent != nullptr)
             sc.SetUserAgent(userAgent);
         sc.SetConfiguration(config);
-        sc.download(url, filepath, completedCallback, progressCallback);
+        sc.Download(url, filepath, cbh);
     }
 }
