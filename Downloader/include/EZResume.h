@@ -19,8 +19,6 @@
 
 namespace EZResume
 {
-    typedef void (*DownloadCompletedCallback)(int id, int, const char*);
-    typedef void (*DownloadProgressCallback)(int id, unsigned long totalToDownload, unsigned long downloadedNow);
     typedef unsigned long ulong;
 
     /// @brief This scoped enum described the Download info state
@@ -72,6 +70,32 @@ namespace EZResume
         unsigned long ChunkSizeInBytes = 4194304; /* 4MB */
     };
 
+    /// <summary>
+    /// An Interface to enable users to implement callbacks for the downloader
+    /// </summary>
+    class EZResume_API IDownloaderHandler {
+    public:
+        /// <summary>
+        /// Will be called when a download has completed.
+        /// </summary>
+        /// <param name="id">Instance id of the downloader object.</param>
+        /// <param name="result">A DownloadResult value for the finished task</param>
+        /// <param name="msg">A friendly message</param>
+        virtual void DownloadCompleted(const int id, const DownloadResult result, const char* msg) = 0;
+
+        /// <summary>
+        /// Called each time a downloaded buffer is processed. Should be used to update progress
+        /// </summary>
+        /// <param name="id">Instance id of the downloader object.</param>
+        /// <param name="totalToDownload">Total size in bytes remaining to download.</param>
+        /// <param name="downloadedNow">Number of bytes downloaded in the current stream buffer.</param>
+        virtual void DownloadProgress(const int id, const ulong totalToDownload, const ulong downloadedNow) = 0;
+    };
+
+
+    /// <summary>
+    /// Main Downloader class used to start a download
+    /// </summary>
     class EZResume_API Downloader
     {
     public:
@@ -82,19 +106,19 @@ namespace EZResume
         /// <summary>
         /// Download a file from a given url using http or https.
         /// </summary>
+        /// <param name="id">An instance ID for this downloader given by the user. The user should make sure these are unique when using downloader in multiple threads.</param>
         /// <param name="url">The URL where the source file is to be downloaded from</param>
         /// <param name="filepath">Path where store the downloaded file</param>
         /// <param name="config">Configutation struct for the downloader</param>
-        /// <param name="funcCompleted">Callback when the download is finished</param>
+        /// <param name="cbh">Pointer to a ccallback handler interface</param>
         /// <param name="funcProgress">Callback for the download progress</param>
         /// <param name="userAgent">Which useragent should we sent to the remote server.</param>
-        void download(
+        void Download(
             const int id,
             const char* url,
             const char* filepath,
             EZResume::Configutation config,
-            DownloadCompletedCallback,
-            DownloadProgressCallback = nullptr,
+            IDownloaderHandler* cbh = nullptr,
             const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );
 

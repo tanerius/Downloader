@@ -10,7 +10,7 @@ namespace EZResume
         char* memory;
         size_t size;
         curl_off_t totalSize;
-        DownloadProgressCallback callback = nullptr;
+        IDownloaderHandler* callback = nullptr;
         int id = -1;
     };
 
@@ -56,11 +56,10 @@ namespace EZResume
         /**
          Download url and rename it to satisfy filepath
          */
-        DownloadResult download(
-            const char *url,
-            const char *filepath,
-            DownloadCompletedCallback,
-            DownloadProgressCallback = nullptr
+        DownloadResult Download(
+            const char* url,
+            const char* filepath,
+            IDownloaderHandler* cbh = nullptr
             );
 
         char* GetVersion() const;
@@ -86,7 +85,7 @@ namespace EZResume
         void InitCURL();
         DownloadResult ValidateResource(const char* url);
         void CleanString(std::string &);
-        DownloadResult ProcessResultAndCleanup(const DownloadResult result, DownloadCompletedCallback, const char* msg);
+        DownloadResult ProcessResultAndCleanup(const DownloadResult result, IDownloaderHandler* cbh, const char* msg);
 
         // HTTP Statuses
         long GetLastResponseCode() const;
@@ -116,7 +115,6 @@ namespace EZResume
         SingleClient::ResourceStatus *m_resourceStatus = nullptr;
         std::string m_userAgent;
         EZResume::Configutation m_conf;
-        DownloadProgressCallback m_ProgressCallbackFn = nullptr;
         int m_id = -1;
     };
 }

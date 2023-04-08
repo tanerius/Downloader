@@ -19,8 +19,7 @@ FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download
 FetchContent_MakeAvailable(json)
 
 add_executable(DownloaderTest
-    "src/main.cpp"
-    )
+    "src/main.cpp")
 
 target_compile_features(DownloaderTest PRIVATE cxx_std_17)
 
