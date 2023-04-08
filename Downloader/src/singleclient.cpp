@@ -504,11 +504,6 @@ namespace EZResume
         return DownloadResult::OK;
     }
 
-    int SingleClient::ProgressCallback(void* , curl_off_t /* dlout */, curl_off_t /* dlnow */, curl_off_t , curl_off_t)
-    {
-        return 0;
-    }
-
     size_t SingleClient::WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
     {
         return fwrite(ptr, size, nmemb, stream);

@@ -72,8 +72,6 @@ namespace EZResume
             S_ERROR
         };
 
-        static int ProgressCallback(void *ptr, curl_off_t dlout, curl_off_t dlnow, curl_off_t , curl_off_t);
-
         static size_t WriteToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
         static size_t WriteToString(void *ptr, size_t size, size_t nmemb, std::string &sp);
         static size_t WriteToMemory(char* ptr, size_t size, size_t nmemb, void* userdata);
