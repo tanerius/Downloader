@@ -75,6 +75,7 @@ namespace EZResume
     /// </summary>
     class EZResume_API IDownloaderHandler {
     public:
+
         /// <summary>
         /// Will be called when a download has completed.
         /// </summary>

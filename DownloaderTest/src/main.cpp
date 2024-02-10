@@ -23,6 +23,7 @@ class CallBackHandlerTest : public EZResume::IDownloaderHandler
 public:
     int m_id = -1;
     EZResume::DownloadResult m_lastResult = EZResume::DownloadResult::IDLE;
+    virtual ~CallBackHandlerTest() {}
 public:
     void DownloadCompleted(const int id, const EZResume::DownloadResult result, const char*)
     {
