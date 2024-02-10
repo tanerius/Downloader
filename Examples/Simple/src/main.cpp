@@ -5,11 +5,6 @@
 #include <vector>
 #include <cstdio>
 #include <thread>
-#include <nlohmann/json.hpp>
-
-
-int result = -1;
-int dlID = -1;
 
 #ifdef WIN32 
 #define PathSeparator      "\\"

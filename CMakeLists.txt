@@ -39,6 +39,9 @@ add_subdirectory(External)
 # Add all required files for Downloader
 add_subdirectory(Downloader)
 
+# Add Examples
+add_subdirectory(Examples/Simple)
+
 # Add DownloaderDemo
 
 if(${DOWNLOADER_BUILD_TESTS})
