@@ -123,7 +123,7 @@ namespace EZResume
             const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );
 
-        char* GetVersion(int& length);
+        const char* GetVersion();
     };
 }
 

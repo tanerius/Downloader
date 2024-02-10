@@ -62,7 +62,7 @@ namespace EZResume
             IDownloaderHandler* cbh = nullptr
             );
 
-        char* GetVersion() const;
+        static const char* GetVersion();
 
     private:
         enum FileMetaStatus

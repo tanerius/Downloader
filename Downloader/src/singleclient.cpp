@@ -36,15 +36,9 @@ namespace EZResume
         curl_easy_cleanup(m_curl);
     }
 
-    char* SingleClient::GetVersion() const 
+    const char* SingleClient::GetVersion() 
     {
-        char* v = new char[10];
-#ifdef EZR_APPLE
-        std::strcpy(v, EZResume_VERSION);
-#else
-        strcpy_s(v, 6, EZResume_VERSION);
-#endif
-        return v;
+        return EZResume_VERSION;
     }
 
     void SingleClient::SetChunkSize(size_t s)

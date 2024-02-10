@@ -10,11 +10,9 @@ namespace EZResume
 
     Downloader::~Downloader() {}
 
-    char* Downloader::GetVersion(int& length)
+    const char* Downloader::GetVersion()
     {
-        SingleClient sc(0);
-        length = 10;
-        return sc.GetVersion();
+        return SingleClient::GetVersion();
     }
 
     void Downloader::Download(
