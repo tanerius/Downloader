@@ -27,11 +27,9 @@ namespace EZResume
         const char* userAgent
     )
     {
-        SingleClient sc(config.Id);
-        sc.SetChunkSize(config.ChunkSizeInBytes);
+        SingleClient sc(config);
         if (userAgent != nullptr)
             sc.SetUserAgent(userAgent);
-        sc.SetConfiguration(config);
         sc.Download(url, filepath, cbh);
     }
 }

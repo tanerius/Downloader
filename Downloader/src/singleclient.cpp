@@ -14,20 +14,10 @@
 
 namespace EZResume
 {
-
-    SingleClient::SingleClient(const int id)
+    SingleClient::SingleClient(const Configutation config)
     {
-        m_id = id;
-        SetChunkSize(4194304); // 4 MB chunks default
-        m_userAgent = "EzResumeDownloader";
-        InitCURL();
-    }
-
-    SingleClient::SingleClient(const int id, size_t chunkSize, const char *agent)
-    {
-        m_id = id;
-        SetChunkSize(chunkSize);
-        m_userAgent = agent;
+        m_id = config.Id;
+        SetChunkSize(config.ChunkSizeInBytes);
         InitCURL();
     }
 

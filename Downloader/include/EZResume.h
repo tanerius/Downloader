@@ -52,7 +52,7 @@ namespace EZResume
         /*
         * Give the current download an ID. 
         */
-        unsigned int Id = 0;
+        unsigned int Id = 1;
 
         /*
         * If destination file exists should we overwrite it.

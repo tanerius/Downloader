@@ -43,16 +43,11 @@ namespace EZResume
         };
         SingleClient() = delete;
         SingleClient(const SingleClient&) = delete;
-        SingleClient(const int id);
-        SingleClient(const int id, size_t chunkSize, const char *agent);
-        SingleClient(EZResume::Configutation config);
+        SingleClient(const EZResume::Configutation config);
         virtual ~SingleClient();
-        void SetChunkSize(size_t s);
         void SetUserAgent(const char* ua);
-        unsigned long GetChunkSize() const { return static_cast<unsigned long>(m_chunkSize); }
         void GetUserAgent(char* useragent, unsigned int& size);
-        void SetConfiguration(EZResume::Configutation c) { m_conf = c; }
-        EZResume::Configutation GetConfiguration() { return m_conf; }
+        const EZResume::Configutation GetConfiguration() const { return m_conf; }
 
         /**
          Download url and rename it to satisfy filepath
@@ -105,6 +100,7 @@ namespace EZResume
             SFileMetaData& md,
             bool isEof);
 
+        void SetChunkSize(size_t s);
         void SetMetaDataDefaults(SFileMetaData& md);
 
     private:
