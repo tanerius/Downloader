@@ -112,7 +112,6 @@ namespace EZResume
         /// <param name="filepath">Path where store the downloaded file</param>
         /// <param name="config">Configutation struct for the downloader</param>
         /// <param name="cbh">Pointer to a ccallback handler interface</param>
-        /// <param name="funcProgress">Callback for the download progress</param>
         /// <param name="userAgent">Which useragent should we sent to the remote server.</param>
         void Download(
             const int id,
@@ -123,7 +122,7 @@ namespace EZResume
             const char* userAgent = nullptr /* Defaults to EzResumeDownloader_version*/
         );
 
-        const char* GetVersion();
+        const char* GetVersion() const;
     };
 }
 

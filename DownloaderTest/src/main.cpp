@@ -183,60 +183,42 @@ TEST(Download, Test_override_corrupt_metafile) {
     delete cbh;
 }
 
-int idlocal1 = 0;
-int retlocal1 = -1;
-
-void DownloadTask_1(int taskid)
-{
-    EZResume::Downloader d;
-    EZResume::Configutation config;
-
-    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.bin");
-    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.tmp");
-
-    std::remove(dataFile.c_str());
-    std::remove(metaFile.c_str());
-        
-    d.Download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
-        nullptr);
-
-    std::remove(dataFile.c_str());
-    std::remove(metaFile.c_str());
-}
-
-int idlocal2 = 0;
-int retlocal2 = -1;
-
-void DownloadTask_2(int taskid)
-{
-    EZResume::Downloader d;
-    EZResume::Configutation config;
-
-    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.bin");
-    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.tmp");
-
-    std::remove(dataFile.c_str());
-    std::remove(metaFile.c_str());
-
-    d.Download(taskid, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
-        nullptr);
-
-    std::remove(dataFile.c_str());
-    std::remove(metaFile.c_str());
-}
-
 TEST(ThreaddedDownload, Test_multithreaded_download) {
-    // Constructs the new thread and runs it. Does not block execution.
-    std::thread t1(DownloadTask_1, 2);
-    std::thread t2(DownloadTask_2, 3);
+    EZResume::Downloader d;
+    EZResume::Configutation config;
 
-    // Do other things...
+    // set up stuff for thread 1
+    std::string dataFile_1 = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.bin");
+    std::string metaFile_1 = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.tmp");
+
+    std::remove(dataFile_1.c_str());
+    std::remove(metaFile_1.c_str());
+
+    // set up stuff for thread 2
+    std::string dataFile_2 = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.bin");
+    std::string metaFile_2 = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.tmp");
+
+    std::remove(dataFile_2.c_str());
+    std::remove(metaFile_2.c_str());
+
+    // Constructs the new thread and runs it. Does not block execution.
+
+    std::thread t1([&d, &dataFile_1, &config]() {
+        d.Download(1, "https://home.tanerius.com/samples/files/10MB.bin", dataFile_1.c_str(), config, nullptr);
+        });
+    
+    std::thread t2([&d, &dataFile_2, &config]() {
+        d.Download(2, "https://home.tanerius.com/samples/files/10MB.bin", dataFile_2.c_str(), config, nullptr);
+        });
 
     // Makes the main thread wait for the new thread to finish execution, therefore blocks its own execution.
     t1.join();
     t2.join();
 
-    // TODO: Make a good test for multithreading
+    std::remove(dataFile_1.c_str());
+    std::remove(metaFile_1.c_str());
+    std::remove(dataFile_2.c_str());
+    std::remove(metaFile_2.c_str());
 }
 
 

@@ -6,11 +6,15 @@
 
 namespace EZResume
 {
-    Downloader::Downloader() {}
+    Downloader::Downloader() {
+        curl_global_init(CURL_GLOBAL_ALL);
+    }
 
-    Downloader::~Downloader() {}
+    Downloader::~Downloader() {
+        curl_global_cleanup();
+    }
 
-    const char* Downloader::GetVersion()
+    const char* Downloader::GetVersion() const
     {
         return SingleClient::GetVersion();
     }

@@ -540,14 +540,6 @@ namespace EZResume
 
     void SingleClient::InitCURL()
     {
-        // init global
-        static bool globalInitialized = false;
-        if (!globalInitialized)
-        {
-            curl_global_init(CURL_GLOBAL_ALL); // there won't be curl_global_cleanup();
-            globalInitialized = true;
-        }
-
         // init current session
         m_curl = curl_easy_init();
         // try not to use signals
