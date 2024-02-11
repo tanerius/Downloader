@@ -43,7 +43,7 @@ int main(int, char*[])
     std::remove(dataFile.c_str());
     std::remove(metaFile.c_str());
 
-    d.Download(1, "https://home.tanerius.com/samples/files/50MB.bin", dataFile.c_str(), config,
+    d.Download("https://home.tanerius.com/samples/files/50MB.bin", dataFile.c_str(), config,
         cbh);
 
     std::remove(dataFile.c_str());

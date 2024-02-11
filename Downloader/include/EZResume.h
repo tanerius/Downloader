@@ -45,10 +45,15 @@ namespace EZResume
     };
 
     /// <summary>
-    /// Struct used to configure the downloader
+    /// Struct used to configure each downloader. Every download should use its own Configuration.
     /// </summary>
     struct EZResume_API Configutation
     {
+        /*
+        * Give the current download an ID. 
+        */
+        unsigned int Id = 0;
+
         /*
         * If destination file exists should we overwrite it.
         */
@@ -114,7 +119,6 @@ namespace EZResume
         /// <param name="cbh">Pointer to a ccallback handler interface</param>
         /// <param name="userAgent">Which useragent should we sent to the remote server.</param>
         void Download(
-            const int id,
             const char* url,
             const char* filepath,
             EZResume::Configutation config,

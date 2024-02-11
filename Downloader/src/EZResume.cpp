@@ -20,7 +20,6 @@ namespace EZResume
     }
 
     void Downloader::Download(
-        const int id,
         const char* url,
         const char* filepath,
         EZResume::Configutation config,
@@ -28,7 +27,7 @@ namespace EZResume
         const char* userAgent
     )
     {
-        SingleClient sc(id);
+        SingleClient sc(config.Id);
         sc.SetChunkSize(config.ChunkSizeInBytes);
         if (userAgent != nullptr)
             sc.SetUserAgent(userAgent);

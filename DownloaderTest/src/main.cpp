@@ -65,7 +65,7 @@ TEST(Download, Test50MB_default) {
     std::remove(dataFile.c_str());
     std::remove(metaFile.c_str());
 
-    d.Download(1, "https://home.tanerius.com/samples/files/50MB.bin", dataFile.c_str(), config,
+    d.Download("https://home.tanerius.com/samples/files/50MB.bin", dataFile.c_str(), config,
         cbh);
 
     EXPECT_EQ(cbh->m_id, 1);
@@ -86,7 +86,7 @@ TEST(Download, Test100KB_default) {
     std::remove(dataFile.c_str());
     std::remove(metaFile.c_str());
 
-    d.Download(1, "https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
+    d.Download("https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
         cbh);
 
     EXPECT_EQ(cbh->m_id, 1);
@@ -109,7 +109,7 @@ TEST(Download, Test_chunk_too_small) {
 
     config.ChunkSizeInBytes = 512L;
 
-    d.Download(1, "https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
+    d.Download("https://home.tanerius.com/samples/files/100KB.bin", dataFile.c_str(), config,
         cbh);
 
     std::remove(dataFile.c_str());
@@ -141,7 +141,7 @@ TEST(Download, Test_meta_file_corrupt) {
     ofs.close();
 
     CallBackHandlerTest* cbh = new CallBackHandlerTest();
-    d.Download(1, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
+    d.Download("https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
         cbh);
 
     EXPECT_EQ(cbh->m_id, 1);
@@ -173,7 +173,7 @@ TEST(Download, Test_override_corrupt_metafile) {
     ofs.close();
 
     CallBackHandlerTest* cbh = new CallBackHandlerTest();
-    d.Download(1, "https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
+    d.Download("https://home.tanerius.com/samples/files/10MB.bin", dataFile.c_str(), config,
         cbh);
 
     std::remove(dataFile.c_str());
@@ -185,7 +185,10 @@ TEST(Download, Test_override_corrupt_metafile) {
 
 TEST(ThreaddedDownload, Test_multithreaded_download) {
     EZResume::Downloader d;
-    EZResume::Configutation config;
+    EZResume::Configutation config_1;
+    config_1.Id = 1;
+    EZResume::Configutation config_2;
+    config_2.Id = 2;
 
     // set up stuff for thread 1
     std::string dataFile_1 = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.bin");
@@ -203,12 +206,12 @@ TEST(ThreaddedDownload, Test_multithreaded_download) {
 
     // Constructs the new thread and runs it. Does not block execution.
 
-    std::thread t1([&d, &dataFile_1, &config]() {
-        d.Download(1, "https://home.tanerius.com/samples/files/10MB.bin", dataFile_1.c_str(), config, nullptr);
+    std::thread t1([&d, &dataFile_1, &config_1]() {
+        d.Download("https://home.tanerius.com/samples/files/10MB.bin", dataFile_1.c_str(), config_1, nullptr);
         });
     
-    std::thread t2([&d, &dataFile_2, &config]() {
-        d.Download(2, "https://home.tanerius.com/samples/files/10MB.bin", dataFile_2.c_str(), config, nullptr);
+    std::thread t2([&d, &dataFile_2, &config_2]() {
+        d.Download("https://home.tanerius.com/samples/files/10MB.bin", dataFile_2.c_str(), config_2, nullptr);
         });
 
     // Makes the main thread wait for the new thread to finish execution, therefore blocks its own execution.
@@ -233,7 +236,7 @@ TEST(FTPDownload, Test200MB_default) {
     std::remove(metaFile.c_str());
 
     CallBackHandlerTest* cbh = new CallBackHandlerTest();
-    d.Download(1, "ftp://212.183.159.230/pub/200MB.zip", dataFile.c_str(), config,
+    d.Download("ftp://212.183.159.230/pub/200MB.zip", dataFile.c_str(), config,
         cbh);
 
     EXPECT_EQ(cbh->m_id, 1);

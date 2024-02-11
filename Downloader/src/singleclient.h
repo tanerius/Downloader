@@ -45,6 +45,7 @@ namespace EZResume
         SingleClient(const SingleClient&) = delete;
         SingleClient(const int id);
         SingleClient(const int id, size_t chunkSize, const char *agent);
+        SingleClient(EZResume::Configutation config);
         virtual ~SingleClient();
         void SetChunkSize(size_t s);
         void SetUserAgent(const char* ua);
