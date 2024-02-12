@@ -125,9 +125,14 @@ namespace EZResume
         if (m_chunkSize <= sizeof(SFileMetaData))
             return ProcessResultAndCleanup(DownloadResult::CHUNK_SIZE_TOO_SMALL, cbh, "Chunk size cannot be smaller than SFileMetaData");
 
+        // Do a HEAD request to get headers info about the resource
         DownloadResult val = ValidateResource(url);
-        if (val != DownloadResult::OK)
+        if (val != DownloadResult::OK || m_resourceStatus->IsValidated)
             return ProcessResultAndCleanup(val, cbh, "Could not validate resource");
+
+        // If resource was not properly validated
+        if(!m_resourceStatus->IsValidated)
+            return ProcessResultAndCleanup(DownloadResult::CANNOT_RETREIVE_HEADER_INFO, cbh, "Could not validate resource");
 
         DLOG("ETag from HEAD is " << m_resourceStatus->ETag << " and is " <<m_resourceStatus->ETag.length() <<  " long");
 

@@ -42,6 +42,7 @@ namespace EZResume
         CANNOT_WRITE_META_DATA,             /* Was unable to write the meta data to the download file */
         CANNOT_RENAME_TEMP_FILE,            /* Failed to rename the tmp metafile after download */
         DESTINATION_FILE_EXISTS,            /* The destination file exists and overwrite flag is not set */
+        CANNOT_RETREIVE_HEADER_INFO,        /* Was not able to validate the file headers */
     };
 
     /// <summary>
