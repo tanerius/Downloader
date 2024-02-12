@@ -5,6 +5,9 @@ set(DL_INTERFACE_PATH "include")
 
 message(STATUS ${CMAKE_BINARY_DIR})
 
+# Find the CURL library
+find_package(CURL REQUIRED)
+
 file(GLOB_RECURSE DL_SRC_LIST
             LIST_DIRECTORIES false 
             ${DL_SRC_PATH}/*
@@ -82,18 +85,18 @@ if(WIN32)
     )
 
     target_link_libraries(EZResume
-        PUBLIC CURL::libcurl
+        ${CURL_LIBRARIES}
     )
 
     
 else()
     target_link_libraries(
         EZResume
-            ${LIB_CURL})
+            ${CURL_LIBRARIES})
 
     target_include_directories(
         EZResume 
-            PUBLIC "${CURL_PATH}/include"
+            PUBLIC ${CURL_INCLUDE_DIR}
             PUBLIC ${DL_INTERFACE_PATH}
     )
 endif()

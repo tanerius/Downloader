@@ -17,6 +17,7 @@ namespace EZResume
     SingleClient::SingleClient(const Configutation config)
     {
         m_id = config.Id;
+        m_conf = config;
         SetChunkSize(config.ChunkSizeInBytes);
         InitCURL();
     }
@@ -127,7 +128,7 @@ namespace EZResume
 
         // Do a HEAD request to get headers info about the resource
         DownloadResult val = ValidateResource(url);
-        if (val != DownloadResult::OK || m_resourceStatus->IsValidated)
+        if (val != DownloadResult::OK)
             return ProcessResultAndCleanup(val, cbh, "Could not validate resource");
 
         // If resource was not properly validated
@@ -250,6 +251,9 @@ namespace EZResume
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
             // Set user agent
             curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
+            // Set to not verify certs as it is not our job we only want to download
+            curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYHOST, 0L);
             // forward all data to this func
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToMemory);
             struct MemoryStruct chunk;          /* This chunk will hold curl callback buffer info during the transfer */
@@ -379,6 +383,9 @@ namespace EZResume
             curl_easy_setopt(m_curl, CURLOPT_URL, url);
             // Set user agent
             curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
+            // Set to not verify certs as it is not our job we only want to download
+            curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYHOST, 0L);
             // forward all data to this func
             curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, &SingleClient::WriteToFile);
 
@@ -720,6 +727,10 @@ namespace EZResume
         curl_easy_setopt(m_curl, CURLoption::CURLOPT_USERAGENT, m_userAgent.c_str());
         curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "HEAD");
         curl_easy_setopt(m_curl, CURLOPT_URL, url);
+
+        curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
         curl_easy_setopt(m_curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(m_curl, CURLOPT_DEFAULT_PROTOCOL, "https");
         struct curl_slist *headers = NULL;

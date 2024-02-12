@@ -32,10 +32,6 @@ elseif(${EZResume_PLATFORM} STREQUAL "Apple")
     set(DOWNLOADER_LIBOUTPUTNAME "ezresume_${EZResume_VERSION}")
 endif()
 
-
-# Add all required externals
-add_subdirectory(External)
-
 # Add all required files for Downloader
 add_subdirectory(Downloader)
 

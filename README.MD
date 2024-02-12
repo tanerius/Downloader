@@ -1,6 +1,6 @@
 # EZResume File Downloader Library in C++  
 
-Current version is: *1.2.0*  
+Current version is: *1.3.0*  
   
 Work in progress...  
   
@@ -75,8 +75,6 @@ int main() {
     EZResume::Downloader d;
     // We also create a configuration object with the default values
     EZResume::Configutation config;
-    // we create a random id that we want for the instance (this is useful when downloading using threads)
-    int id = 1;
     // and finally we create a result variable to store our download result
     EZResume::DownloadResult result;
 
@@ -85,7 +83,6 @@ int main() {
     
     // then we simply start the download
     d.Download(
-        id,                                 // pass the iinstace id from before
         "https://example.com/somefile.zip",  // the url where to download from
         "./myfile.zip",                     // output filename (can be a relative too)
         config,                             // the config
@@ -104,3 +101,65 @@ int main() {
     return ret;
 }
 ```
+
+### Using the library in a C++ thread example
+
+Similar to the previous example we will see how to start downloading two different files in threads. Please note that the `EZResume::Downloader d;` is NOT thread safe, nor is it meant to be called outside the main thread. Only the `d.Download(...)` method with its own config can be called in a new thread. Below is an example
+
+```cpp
+int main() {
+    EZResume::Downloader d;
+    EZResume::Configutation config_1;
+    config_1.Id = 1;
+    EZResume::Configutation config_2;
+    config_2.Id = 2;
+
+    // set up stuff for thread 1
+    std::string dataFile_1 = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.bin");
+    std::string metaFile_1 = std::string(".") + std::string(PathSeparator) + std::string("10MB-1.tmp");
+
+    std::remove(dataFile_1.c_str());
+    std::remove(metaFile_1.c_str());
+
+    // set up stuff for thread 2
+    std::string dataFile_2 = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.bin");
+    std::string metaFile_2 = std::string(".") + std::string(PathSeparator) + std::string("10MB-2.tmp");
+
+    std::remove(dataFile_2.c_str());
+    std::remove(metaFile_2.c_str());
+
+    // Constructs the new thread and runs it. Does not block execution.
+
+    std::thread t1([&d, &dataFile_1, &config_1]() {
+        d.Download("https://home.tanerius.com/samples/files/10MB.bin", dataFile_1.c_str(), config_1, nullptr);
+        });
+    
+    std::thread t2([&d, &dataFile_2, &config_2]() {
+        d.Download("https://home.tanerius.com/samples/files/10MB.bin", dataFile_2.c_str(), config_2, nullptr);
+        });
+
+    // Makes the main thread wait for the new thread to finish execution, therefore blocks its own execution.
+    t1.join();
+    t2.join();
+
+    std::remove(dataFile_1.c_str());
+    std::remove(metaFile_1.c_str());
+    std::remove(dataFile_2.c_str());
+    std::remove(metaFile_2.c_str());
+
+    return 0;
+}
+```
+
+## Update Log
+
+### Version 1.3.0
+
+- Now uses systems libcurl instead of own.
+- Threads are handled better
+- Id of download is in configuration now
+- Simpler Downloader constructor
+- Does not validate host certificates as this lib is purely a simple downloader and shouldn't care about more than getting the file across.
+- Some readability fixes
+- Removed a failing test because of third party URL failure (download file via FTP)
+  

@@ -224,30 +224,6 @@ TEST(ThreaddedDownload, Test_multithreaded_download) {
     std::remove(metaFile_2.c_str());
 }
 
-
-TEST(FTPDownload, Test200MB_default) {
-    EZResume::Downloader d;
-    EZResume::Configutation config;
-
-    std::string dataFile = std::string(".") + std::string(PathSeparator) + std::string("200MB_ftp.bin");
-    std::string metaFile = std::string(".") + std::string(PathSeparator) + std::string("200MB_ftp.tmp");
-
-    std::remove(dataFile.c_str());
-    std::remove(metaFile.c_str());
-
-    CallBackHandlerTest* cbh = new CallBackHandlerTest();
-    d.Download("ftp://212.183.159.230/pub/200MB.zip", dataFile.c_str(), config,
-        cbh);
-
-    EXPECT_EQ(cbh->m_id, 1);
-    std::remove(dataFile.c_str());
-    std::remove(metaFile.c_str());
-    EXPECT_EQ(cbh->m_lastResult, EZResume::DownloadResult::OK);
-    delete cbh;
-}
-
-
-
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
